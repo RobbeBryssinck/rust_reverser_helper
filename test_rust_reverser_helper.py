@@ -14,21 +14,13 @@ class RustReverserTests(unittest.TestCase):
         self.symbols = json.loads(data, object_hook=lambda d: SimpleNamespace(**d))
         self.base = idaapi.get_imagebase()
 
-        self.functions_by_virtual_address = {}
-        for function in self.symbols.functionSymbols:
-            self.functions_by_virtual_address[function.virtualAddress] = function
-        
-        self.types_by_id = {}
-        for type in self.symbols.typeSymbols:
-            self.types_by_id[type.id] = type
-
     def test_multiple_return_false_negatives(self):
         for function in self.symbols.functionSymbols:
             return_type_id = function.returnTypeId
             
-            if not return_type_id in self.types_by_id:
+            if not return_type_id in self.symbols.typeSymbols:
                 continue
-            type = self.types_by_id[return_type_id]
+            type = self.symbols.typeSymbols[return_type_id]
             
             if type.length <= 8 or type.length > 16:
                 continue
@@ -48,15 +40,15 @@ class RustReverserTests(unittest.TestCase):
 
             virtual_address = address - self.base
 
-            if not virtual_address in self.functions_by_virtual_address:
+            if not virtual_address in self.symbols.functionSymbols:
                 continue
-            function = self.functions_by_virtual_address[virtual_address]
+            function = self.symbols.functionSymbols[virtual_address]
 
             return_type_id = function.returnTypeId
 
-            if not return_type_id in self.types_by_id:
+            if not return_type_id in self.symbols.typeSymbols:
                 continue
-            type = self.types_by_id[return_type_id]
+            type = self.symbols.typeSymbols[return_type_id]
 
             with self.subTest(msg="{}: {}, {}".format(hex(address), function.id, function.name)):
                 self.assertTrue(type.length > 8 and type.length <= 16, "{}: {}".format(hex(address), function.id))
