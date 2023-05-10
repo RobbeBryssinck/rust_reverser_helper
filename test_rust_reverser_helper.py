@@ -12,6 +12,7 @@ import ida_loader
 import ida_hexrays
 import ida_funcs
 import ida_kernwin
+import ida_nalt
 
 reverser = rust_reverser_helper.RustReverserHelper()
 
@@ -249,6 +250,7 @@ class RustReverserTests(unittest.TestCase):
 
         string_extractor = rust_string_extractor.RustStringExtractor()
         string_extractor.extract_strings_from_files(source_directory)
+
         for rust_string in string_extractor.strings:
             with self.subTest(msg="Rust string: {}".format(rust_string)):
                 if rust_string in reverser.rust_strings:
@@ -281,6 +283,13 @@ if __name__ == "__main__":
     idaapi.require("signature_fixer")
     idaapi.require("rust_detection")
     idaapi.require("rust_reverser_helper")
+
+    file_path = ida_nalt.get_input_file_path()
+    file_base_name = os.path.basename(file_path).split('.')[-2]
+    usym_file_path = os.getcwd() + "/" + file_base_name + ".json"
+
+    if not os.path.exists(usym_file_path):
+        ida_kernwin.warning("USYM file '{}' does not exist. Did you run the Universal Symbol conversion tool?".format(usym_file_path))
 
     reverser.execute_all()
     unittest.TextTestRunner().run(unittest.TestLoader().loadTestsFromTestCase(RustReverserTests))
