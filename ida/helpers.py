@@ -137,7 +137,7 @@ def is_moving_instruction(address: int) -> bool:
     operator: str = idc.print_insn_mnem(address)
 
     if platform.is_intel_x86():
-        return operator == "mov" or operator == "movsxd" or operator == "movaps"
+        return "mov" in operator
     else:
         return False
 
