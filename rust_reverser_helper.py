@@ -3,6 +3,7 @@ import rust_strings
 import disassembly_fixer
 import signature_fixer
 import rust_detection
+import rust_main_detector
 
 import ida_auto
 import idaapi
@@ -34,8 +35,14 @@ class RustReverserHelper():
         ida_auto.auto_wait()
         signature_fixer.fix_multiple_return_signatures()
         ida_auto.auto_wait()
+        rust_main_address: int = rust_main_detector.detect_rust_main()
+        if rust_main_address == 0:
+            print("Rust main not detected.")
+            helpers.info_ex("The Rust Reverser Helper has finished running. The RustMain function was not detected.\n\nBeware that Ida's decompiler has not fully refreshed the code at all call sites.\nIf you see unassigned local variables (variables in red), decompile the function twice (hit F5 twice).")
+        else:
+            print("Rust main detected at {}".format(rust_main_address))
+            helpers.info_ex("The Rust Reverser Helper has finished running. The RustMain function was detected at address '{}'.\n\nBeware that Ida's decompiler has not fully refreshed the code at all call sites.\nIf you see unassigned local variables (variables in red), decompile the function twice (hit F5 twice).".format(hex(rust_main_address)))
 
-        helpers.info_ex("The Rust Reverser Helper has finished running.\n\nBeware that Ida's decompiler has not fully refreshed the code at all call sites.\nIf you see unassigned local variables (variables in red), decompile the function twice (hit F5 twice).")
 
 if __name__ == "__main__":
     idaapi.require("helpers")
@@ -43,6 +50,7 @@ if __name__ == "__main__":
     idaapi.require("disassembly_fixer")
     idaapi.require("signature_fixer")
     idaapi.require("rust_detection")
+    idaapi.require("rust_main_detector")
 
     reverser = RustReverserHelper()
     reverser.execute_all()

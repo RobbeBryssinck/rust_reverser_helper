@@ -233,3 +233,13 @@ def get_load_address_instruction() -> str:
     else:
         return ""
 
+def get_first_argument_register() -> str:
+    platform = get_platform()
+
+    if platform.is_x64():
+        return "rcx"
+    elif platform.is_x86():
+        return "ecx"
+    else:
+        return ""
+
