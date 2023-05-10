@@ -9,7 +9,7 @@ import idautils
 class RustReverserTests(unittest.TestCase):
     def setUp(self):
         data = ""
-        with open("rust_sample.json") as file:
+        with open("binding.json") as file:
             data = file.read()
         self.symbols = json.loads(data, object_hook=lambda d: SimpleNamespace(**d))
         self.base = idaapi.get_imagebase()
@@ -18,6 +18,11 @@ class RustReverserTests(unittest.TestCase):
         self.function_symbols_by_address = {}
         for function_id, function in self.functionSymbols.items():
             self.function_symbols_by_address[function.virtualAddress] = function
+    
+    def unpack_typedef(self, type_symbol):
+        while type_symbol.type == 7:
+            type_symbol = self.typeSymbols[type_symbol.typedefSource]
+        return type_symbol
 
     # TODO: maybe add checks like name checking to make sure enums are being detected properly?
     def is_rust_enum_multiple_return(self, enum_symbol):
@@ -61,6 +66,9 @@ class RustReverserTests(unittest.TestCase):
 
     def is_multiple_return(self, type_symbol):
         if type_symbol.type == 3 and "enum2$" in type_symbol.name:
+            # TODO: subtest check for raised exception here
+            with self.subTest(msg="is_rust_enum_multiple_return failure {}".format(type_symbol.name)):
+                self.assertRaises(RuntimeError, self.is_rust_enum_multiple_return, type_symbol)
             return self.is_rust_enum_multiple_return(type_symbol)
         
         # TODO: handle generic unions
@@ -96,6 +104,9 @@ class RustReverserTests(unittest.TestCase):
                 continue
             type_symbol = self.typeSymbols[return_type_id]
 
+            if type_symbol.type == 7:
+                type_symbol = self.unpack_typedef(type_symbol)
+
             if not self.is_multiple_return(type_symbol):
                 continue
 
@@ -126,6 +137,9 @@ class RustReverserTests(unittest.TestCase):
             if not return_type_id in self.typeSymbols:
                 continue
             type_symbol = self.typeSymbols[return_type_id]
+
+            if type_symbol.type == 7:
+                type_symbol = self.unpack_typedef(type_symbol)
 
             if type_symbol.name == "void":
                 print("This should be multiple return, but is void instead: {}, {}, {}".format(function.id, hex(address), function.name))
