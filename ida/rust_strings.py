@@ -25,7 +25,7 @@ def identify_rust_strings():
 
 def create_rust_string_type():
     id = ida_struct.get_struc_id("RustString")
-    if id != -1:
+    if id != ida_idaapi.BADADDR:
         dialogue_result = ida_kernwin.ask_yn(ida_kernwin.ASKBTN_CANCEL, "The RustString type already exists. Do you want to overwrite this type?")
         if dialogue_result == ida_kernwin.ASKBTN_YES:
             idc.del_struc(id)
