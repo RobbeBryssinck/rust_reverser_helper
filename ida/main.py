@@ -27,10 +27,15 @@ if __name__ == "__main__":
     idaapi.require("signature_fixer")
     idaapi.require("rust_detection")
 
+    message: str = ""
     if rust_detection.detect_rust():
-        dialogue_result = ida_kernwin.ask_yn(ida_kernwin.ASKBTN_CANCEL, "This binary is most likely compiled in Rust. Do you want to run the rust analyzer?")
-        if dialogue_result == ida_kernwin.ASKBTN_YES:
-            execute_all()
-        else:
-            helpers.warn_and_exit()
+        message = "This binary is most likely compiled in Rust. Do you want to run the rust analyzer?"
+    else:
+        message = "This binary does not seem to be compiled in Rust. Do you want to run the rust analyzer anyway?"
+
+    dialogue_result = ida_kernwin.ask_yn(ida_kernwin.ASKBTN_CANCEL, message)
+    if dialogue_result == ida_kernwin.ASKBTN_YES:
+        execute_all()
+    else:
+        helpers.warn_and_exit()
 
