@@ -48,18 +48,18 @@ class RustReverserTests(unittest.TestCase):
             if value_type.fieldCount >= 2:
                 return False
             
+            # Empty enum options don't need checking
             if value_type.fieldCount == 0:
-                if first_variant:
-                    type_length = value_type.length
-                    first_variant = False
-                elif type_length != value_type.length:
-                    return False
                 continue
 
             core_type_id: str = str(value_type.fields[0].underlyingTypeId)
             if not core_type_id in self.typeSymbols:
                 raise RuntimeError("Core type id not found: {}".format(core_type_id))
             core_type = self.typeSymbols[core_type_id]
+
+            # Tuples are special, are returned as multiple return
+            if "tuple$<" in core_type.name:
+                return True
 
             if core_type.fieldCount >= 2:
                 return False
@@ -88,6 +88,10 @@ class RustReverserTests(unittest.TestCase):
         if not value_type_id in self.typeSymbols:
             raise RuntimeError("Value type id not found: {}".format(value_type_id))
         value_type = self.typeSymbols[value_type_id]
+
+        # Tuples are special, are returned as multiple return
+        if "tuple$<" in value_type.name:
+            return True
         
         if value_type.fieldCount >= 2:
             return False
@@ -107,6 +111,10 @@ class RustReverserTests(unittest.TestCase):
         return True
 
     def is_multiple_return(self, type_symbol):
+        # Result is an extra special case
+        if type_symbol.type == 3 and type_symbol.length == 16 and "enum2$<core::result::Result<" in type_symbol.name:
+            return True
+        
         if type_symbol.type == 3 and "enum2$<core::option::Option<" in type_symbol.name:
             try:
                 return self.is_rust_option_multiple_return(type_symbol)
