@@ -1,12 +1,17 @@
 import idautils
 import idaapi
 import idc
+import ida_name
 
 from typing import List
 
 import helpers
 
-# TODO: architecture independence (start with 32 vs 64 bit)
+# TODO: expand this (or better yet, find an Ida api function that does this).
+def is_register_name(label: str) -> bool:
+    return label == "rax"
+
+# TODO: architecture independence (start with 32 vs 64 bit).
 def identify_rust_strings():
     for function_address in idautils.Functions():
         identify_rust_strings_in_function(function_address)
@@ -17,6 +22,7 @@ def is_global_rust_string(address: int):
 
     length: int = idc.get_qword(address + 8)
 
+    # TODO: these heuristics are wrong, the compiler makes no such guarantees.
     # Global Rust strings should have the string data right before the str structure.
     # It is possible that the compiler injects padding for 8-byte alignment.
     string_address: int = idc.get_qword(address)
@@ -42,12 +48,12 @@ def identify_rust_strings_in_function(function_address: str):
         if idc.print_insn_mnem(instructions[i]) != "lea":
             continue
 
-        source_address: int = idc.get_operand_value(instructions[i])
+        source_address: int = idc.get_operand_value(instructions[i], 1)
         if not is_in_data_section(source_address):
             continue
 
         if "off_" in idc.print_operand(instructions[i], 1):
-            if is_global_rust_string_empty():
+            if is_global_rust_string_empty(instructions[i]):
                 set_string_name(source_address, "raEmpty")
                 continue
 
@@ -67,7 +73,13 @@ def create_rust_string_label(address: int, length: int) -> str:
         length = 24
 
     for i in range(length):
-        label += chr(idc.get_wide_byte(address + i))
+        character: str = chr(idc.get_wide_byte(address + i))
+        if i == 0 and character.isalpha():
+            character = character.upper()
+        label += character
+
+    # Use "2" as flag here for valid string label names.
+    label = ida_name.validate_name(label, 2)
 
     return label
 
@@ -75,16 +87,46 @@ def create_rust_string_label(address: int, length: int) -> str:
 def set_string_name(address: int, label: str) -> bool:
     if not label.isascii():
         return False
-    
-    idc.set_name(address, label)
+
+    if does_label_exist(label):
+        label = mutate_duplicate_label(label)
+
+    result: bool = idc.set_name(address, label)
+
+    if result == False:
+        raise RuntimeError("Failed to name string at " + hex(address) + ": '" + label + "'")
+
+    print("Successfully placed label at " + hex(address) + ": '" + label + "'")
+
     return True
 
 # TODO: map that marks addresses that have been commented already?
 def set_string_comment(address: int, label: str) -> bool:
     if not label.isascii():
         return False
-    
+
+    if does_label_exist(label):
+        label = mutate_duplicate_label(label)
+
     # TODO: third arg?
-    idc.set_cmt(address, label, False)
+    result: bool = idc.set_cmt(address, label, False)
+
+    if result == False:
+        raise RuntimeError("Failed to place comment: '" + label + "'")
+
+    print("Successfully placed comment: '" + label + "'")
+
     return True
+
+# TODO: handle exception.
+def mutate_duplicate_label(label: str) -> str:
+    for i in range(1024):
+        new_label: str = label + "_" + chr(i)
+        if not does_label_exist(new_label):
+            return new_label
+
+    raise RuntimeError("Failed to find appropriate name for label: '" + label + "'")
+
+def does_label_exist(label: str) -> bool:
+    return idc.get_name_ea_simple(label) != 0xffffffffffffffff
 
