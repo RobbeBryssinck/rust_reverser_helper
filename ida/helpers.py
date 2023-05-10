@@ -209,6 +209,9 @@ def is_jump_dynamic(address: int) -> bool:
     else:
         return False
 
+def is_load_address_instruction(address: int) -> bool:
+    return idc.print_insn_mnem(address) == get_load_address_instruction()
+
 def get_load_address_instruction() -> str:
     platform = get_platform()
 
