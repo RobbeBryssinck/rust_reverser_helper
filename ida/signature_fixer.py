@@ -27,25 +27,61 @@ def does_function_return_multiple(address: int) -> bool:
         if idc.print_insn_mnem(instruction) == "retn":
             index = instructions.index(instruction)
     
-    if index == -1 or index < 4:
+    if index == -1:
         return False
+    
+    walkback_range: int = 10
+    if index < walkback_range:
+        walkback_range = index
 
-    mov1, mov2, add, retn = instructions[(index-3):(index+1)]
+    is_second_return_register_stored: bool = False
 
-    # This is an edge case where the second-to-last instruction is a "pop rbp" sometimes.
-    if idc.print_insn_mnem(add) == "pop":
-        if index < 5:
-            return False
+    for i in range(1, walkback_range):
+        insn: int = instructions[index - i]
+
+        # If a call is made and the second return register is not filled after, it does not exist,
+        # as the second return register can be trashed in a function call.
+        if idc.print_insn_mnem(insn) == "call":
+            break
+
+        position: int = find_second_return_register_position(insn)
         
-        mov1, mov2, add, pop, retn = instructions[(index-4):(index+1)]
+        if position == -1:
+            continue
+        elif position == 0:
+            if idc.print_insn_mnem(insn) == "mov":
+                is_second_return_register_stored = True
+                break
+        elif position == 1:
+            # If the second return register is used, it is probably not stored as a return value.
+            break
+    
+    return is_second_return_register_stored
 
-    if idc.print_insn_mnem(mov1) != "mov" or idc.print_insn_mnem(mov2) != "mov" or idc.print_insn_mnem(add) != "add" or idc.print_insn_mnem(retn) != "retn":
+# Returns -1 if second return register is not used.
+def find_second_return_register_position(address: int) -> int:
+    if is_operand_return_register(address, 0):
+        return 0
+    elif is_operand_return_register(address, 1):
+        return 1
+    else:
+        return -1
+
+def is_operand_return_register(address: int, position: int) -> bool:
+    platform = helpers.get_platform()
+
+    operand: str = idc.print_operand(address, position)
+
+    if operand == "":
         return False
-    
-    if idc.print_operand(mov1, 0) != "rax" or idc.print_operand(mov2, 0) != "rdx" or idc.print_operand(add, 0) != "rsp":
+
+    if platform.is_intel_x86():
+        if operand == "rdx" or operand == "edx" or operand == "dx" or operand == "dl":
+            return True
+        else:
+            return False
+    else:
         return False
-    
-    return True
 
 def fix_multiple_return_signature(address: int):
     declaration: str = generate_multiple_return_signature(address)
