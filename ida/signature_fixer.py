@@ -56,13 +56,14 @@ def fix_multiple_return_signature(address: int):
     idc.apply_type(address, result, idc.TINFO_DEFINITE)
 
 def generate_multiple_return_signature(address: int) -> str:
-    arguments: str = ""
-    
     function_tinfo = idaapi.tinfo_t()
     ida_nalt.get_tinfo(function_tinfo, address)
     function_details = idaapi.func_type_data_t()
     function_tinfo.get_func_details(function_details)
     
+    return_registers_annotation: str = get_return_registers_annotation()
+
+    arguments: str = ""
     for i in range(function_details.size()):
         if i != 0:
             arguments = arguments + ", "
@@ -70,7 +71,17 @@ def generate_multiple_return_signature(address: int) -> str:
         arguments = arguments + get_argument_annotation(i)
 
     # Function name is discarded by parse_decl.
-    return "__int128 __usercall new_func@<rdx:rax>({});".format(arguments)
+    return "__int128 __usercall new_func{}({});".format(return_registers_annotation, arguments)
+
+def get_return_registers_annotation() -> str:
+    platform = helpers.get_platform()
+
+    if platform.is_pe_x64() or platform.is_elf_x64():
+        return "@<rdx:rax>"
+    elif platform.is_arm64():
+        return "@<X1:X0>"
+    else:
+        return ""
 
 def get_argument_annotation(position: int) -> str:
     annotation: str = "@<{}>"
