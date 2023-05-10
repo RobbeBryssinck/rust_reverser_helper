@@ -17,6 +17,15 @@ import ida_nalt
 reverser = rust_reverser_helper.RustReverserHelper()
 
 class RustReverserTests(unittest.TestCase):
+    """
+    How to run the tests:
+    1. Compile a binary in Rust. Make sure the binary is compiled with symbols enabled.
+    2. Run the Universal Symbol Generator program on the symbols, and generate a JSON USYM file.
+    3. Load the compiled binary in Ida. Do NOT run the Rust reverser helper plugin.
+    4. Place the JSON USYM file in the same directory as the Ida database.
+    5. Run this test script.
+    """
+
     def setUp(self):
         data = ""
         with open(ida_loader.get_path(ida_loader.PATH_TYPE_CMD).rsplit('.')[0] + ".json") as file:
