@@ -75,10 +75,9 @@ def generate_multiple_return_signature(address: int) -> str:
 def get_argument_annotation(position: int) -> str:
     annotation: str = "@<{}>"
 
-    # TODO: clean-up
-    platform: str = idaapi.get_file_type_name()
+    platform = helpers.get_platform()
 
-    if platform == "Portable executable for AMD64 (PE)":
+    if platform.is_pe_x64():
         if position == 0:
             return annotation.format("rcx")
         if position == 1:
@@ -88,7 +87,7 @@ def get_argument_annotation(position: int) -> str:
         if position == 3:
             return annotation.format("r9")
         return ""
-    elif platform == "ELF64 for x86-64 (Shared object)":
+    elif platform.is_elf_x64():
         if position == 0:
             return annotation.format("rdi")
         if position == 1:
@@ -102,7 +101,7 @@ def get_argument_annotation(position: int) -> str:
         if position == 5:
             return annotation.format("r9")
         return ""
-    elif platform == "ELF64 for ARM64 (Shared object)":
+    elif platform.is_arm64():
         if position == 0:
             return annotation.format("X0")
         if position == 1:
