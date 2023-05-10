@@ -57,10 +57,14 @@ class Platform():
         ARM32 = 3
         ARM64 = 4
 
+    # TODO: this static init stuff is bad, what if idb is changed, for example?
     def __init__(self):
-        platform_type: str = idaapi.get_file_type_name().lower()
         self.file_format = Platform.FileFormat.NONE
         self.architecture = Platform.Architecture.NONE
+        self.platform = (self.file_format, self.architecture)
+
+    def init(self):
+        platform_type: str = idaapi.get_file_type_name().lower()
 
         if "pe" in platform_type:
             self.file_format = Platform.FileFormat.PE
