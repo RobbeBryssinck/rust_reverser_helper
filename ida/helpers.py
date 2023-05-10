@@ -167,14 +167,35 @@ def get_multiple_return_size() -> int:
     else:
         return 8
 
-def is_jump_to_virtual(address: int) -> bool:
+def is_jump_outside(address: int, function_start: int, function_end: int) -> bool:
     platform = get_platform()
 
     operator: str = idc.print_insn_mnem(address)
     operand: str = idc.print_operand(address, 0)
 
-    if platform.is_x64():
-        return operator == "jmp" and operand == "rax"
+    if platform.is_intel_x86():
+        if operator != "jmp":
+            return False
+
+        if operand == "rax" or operand == "eax":
+            return True
+
+        destination: int = idc.get_operand_value(address, 0)
+        return destination < function_start or destination > function_end
+    else:
+        return False
+
+def is_jump_dynamic(address: int) -> bool:
+    platform = get_platform()
+
+    operator: str = idc.print_insn_mnem(address)
+    operand: str = idc.print_operand(address, 0)
+
+    if platform.is_intel_x86():
+        if operator != "jmp":
+            return False
+
+        return operand == "rax" or operand == "eax"
     else:
         return False
 

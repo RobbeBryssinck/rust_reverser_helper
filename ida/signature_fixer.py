@@ -13,14 +13,14 @@ def fix_multiple_return_signatures():
         if does_function_return_multiple(function_address):
             fix_multiple_return_signature(function_address)
 
-def does_function_return_multiple(address: int) -> bool:
+def does_function_return_multiple(function_start: int) -> bool:
     # If the return type already has the length of a multiple return value,
     # the fixer can ignore this function.
-    function_details = helpers.get_function_details(address)
+    function_details = helpers.get_function_details(function_start)
     if function_details.rettype.get_size() == helpers.get_multiple_return_size():
         return False
 
-    instructions: List[int] = helpers.get_instructions_from_function(address)
+    instructions: List[int] = helpers.get_instructions_from_function(function_start)
     
     if len(instructions) < 3:
         return False
@@ -39,7 +39,7 @@ def does_function_return_multiple(address: int) -> bool:
         walkback_limit = index + 1
 
     is_second_return_register_stored: bool = False
-
+    
     for i in range(1, walkback_limit):
         insn: int = instructions[index - i]
 
@@ -50,7 +50,7 @@ def does_function_return_multiple(address: int) -> bool:
             break
 
         # TODO: check for embedded return value optimization here.
-        if helpers.is_jump_to_virtual(insn):
+        if helpers.is_jump_outside(insn, function_start, idc.find_func_end(function_start)):
             break
 
         position: int = find_second_return_register_position(insn)
@@ -65,8 +65,15 @@ def does_function_return_multiple(address: int) -> bool:
             # If the second return register is used, it is probably not stored as a return value.
             break
     
-    return is_second_return_register_stored
-
+    if is_second_return_register_stored:
+        return True
+    
+    for ref in idautils.CodeRefsTo(function_start, True):
+        if does_caller_use_second_return_register(ref):
+            return True
+    
+    return False
+    
 # Returns -1 if second return register is not used.
 def find_second_return_register_position(address: int) -> int:
     if helpers.is_operand_return_register(address, 0):
@@ -75,6 +82,25 @@ def find_second_return_register_position(address: int) -> int:
         return 1
     else:
         return -1
+
+def does_caller_use_second_return_register(caller_address: int) -> bool:
+    current_instruction: int = caller_address
+    function_end: int = idc.find_func_end(caller_address)
+    
+    for i in range(5):
+        current_instruction = idc.find_code(current_instruction, idc.SEARCH_DOWN)
+        if current_instruction >= function_end or helpers.is_returning_instruction(current_instruction):
+            break
+
+        position: int = find_second_return_register_position(current_instruction)
+        
+        if position == 0:
+            break
+        elif position == 1:
+            if helpers.is_moving_instruction(current_instruction):
+                return True
+    
+    return False
 
 def fix_multiple_return_signature(address: int):
     # Let the decompiler run on the function first to establish an initial function signature.
