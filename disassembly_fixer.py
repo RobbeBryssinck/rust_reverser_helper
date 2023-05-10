@@ -13,14 +13,18 @@ import helpers
 
 # TODO: maybe decompile all again after fixing all functions?
 
-def fix_disassembly():
+problematic_functions = []
+
+def fix_disassembly() -> List[int]:
+    problematic_functions.clear()
+    
     reanalyze_problematic_functions()
 
     ida_auto.auto_wait()
 
-def get_problematic_functions() -> List[int]:
-    problematic_functions = []
+    return problematic_functions
 
+def get_problematic_functions() -> List[int]:
     for function_address in idautils.Functions():
         if is_function_problematic(function_address):
             problematic_functions.append(function_address)
@@ -39,8 +43,7 @@ def is_function_problematic(ea: int) -> bool:
     return True
 
 def reanalyze_problematic_functions():
-    problematic_functions = get_problematic_functions()
-    for function in problematic_functions:
+    for function in get_problematic_functions():
         reanalyze_function(function)
 
 def reanalyze_all_functions():

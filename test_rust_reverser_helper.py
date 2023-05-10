@@ -8,6 +8,8 @@ import rust_reverser_helper
 import idaapi
 import idautils
 import ida_loader
+import ida_hexrays
+import ida_funcs
 
 reverser = rust_reverser_helper.RustReverserHelper()
 
@@ -235,7 +237,22 @@ class RustReverserTests(unittest.TestCase):
                     # Rust's `println!()` macros adds a newline, which the string extractor does not account for.
                     rust_string = rust_string + "\n"
                     self.assertIn(rust_string, reverser.rust_strings)
+    
+    def test_disassembly_fixes(self):
+        for fixed_function in reverser.fixed_functions:
+            with self.subTest("Function fix check: {}".format(hex(fixed_function))):
+                func = ida_funcs.get_func(fixed_function)
+                func_failure = ida_hexrays.hexrays_failure_t()
+                result = ida_hexrays.decompile_func(func, func_failure)
 
+                critical_warning_hit: bool = False
+
+                for warning in result.get_warnings():
+                    if warning.id == 43:
+                        critical_warning_hit = True
+                        break
+                
+                self.assertFalse(critical_warning_hit, "Function is not fixed: {}".format(hex(fixed_function)))
 
 if __name__ == "__main__":
     idaapi.require("helpers")

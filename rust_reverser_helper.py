@@ -56,6 +56,7 @@ def PLUGIN_ENTRY():
 class RustReverserHelper():
     def __init__(self):
         self.rust_strings = []
+        self.fixed_functions = []
 
     def execute_all(self):
         message: str = ""
@@ -72,7 +73,7 @@ class RustReverserHelper():
 
         helpers.get_platform().init()
 
-        disassembly_fixer.fix_disassembly()
+        self.fixed_functions = disassembly_fixer.fix_disassembly()
         ida_auto.auto_wait()
         self.rust_strings = rust_strings.identify_rust_strings()
         ida_auto.auto_wait()
