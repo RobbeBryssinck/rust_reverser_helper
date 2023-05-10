@@ -87,6 +87,10 @@ def does_caller_use_second_return_register(caller_address: int) -> bool:
     current_instruction: int = caller_address
     function_end: int = idc.find_func_end(caller_address)
 
+    # Jumps do not return to the actual call site.
+    if helpers.is_jump(caller_address):
+        return False
+
     for i in range(5):
         current_instruction = idc.find_code(current_instruction, idc.SEARCH_DOWN)
         if current_instruction >= function_end or helpers.is_returning_instruction(current_instruction):

@@ -167,6 +167,16 @@ def get_multiple_return_size() -> int:
     else:
         return 8
 
+def is_jump(address: int) -> bool:
+    platform = get_platform()
+
+    operator: str = idc.print_insn_mnem(address)
+
+    if platform.is_intel_x86():
+        return operator == "jmp"
+    else:
+        return False
+
 def is_jump_outside(address: int, function_start: int, function_end: int) -> bool:
     platform = get_platform()
 
