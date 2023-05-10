@@ -237,7 +237,7 @@ def set_string_comment(address: int, label: str) -> bool:
     return result
 
 def mutate_duplicate_label(label: str) -> str:
-    for i in range(1024):
+    for i in range(0xFFFFFFFF):
         new_label: str = label + "_" + str(i)
         if not does_label_exist(new_label):
             return new_label
