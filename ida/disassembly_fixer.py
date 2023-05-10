@@ -5,6 +5,7 @@ import ida_ua
 import ida_funcs
 import ida_auto
 import ida_problems
+import ida_hexrays
 
 from typing import List
 
@@ -53,6 +54,13 @@ def reanalyze_function(func_start: int):
         ida_ua.create_insn(func_start + i)
 
     ida_funcs.add_func(func_start, func_end)
+    
+    ida_auto.auto_wait()
+
+    hf = ida_hexrays.hexrays_failure_t()
+    ida_hexrays.decompile_func(ida_funcs.get_func(func_start), hf)
+
+    ida_auto.auto_wait()
 
 # TODO: there's a bug in Ida's API.
 # If you undefine and redefine a function's data, the operands are marked as a disassembly problem.

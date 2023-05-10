@@ -1,6 +1,3 @@
-# TODO: argument count
-# TODO: keep types, names, etc.
-
 import idc
 import idautils
 import ida_typeinf
@@ -10,6 +7,8 @@ import ida_nalt
 import helpers
 
 from typing import List
+
+# TODO: check return type for length, keep original if length == 16 bytes.
 
 def fix_multiple_return_signatures():
     for function_address in idautils.Functions():
@@ -22,7 +21,23 @@ def does_function_return_multiple(address: int) -> bool:
     if len(instructions) < 4:
         return False
     
-    mov1, mov2, add, retn = instructions[-4:]
+    index: int = -1
+
+    for instruction in instructions:
+        if idc.print_insn_mnem(instruction) == "retn":
+            index = instructions.index(instruction)
+    
+    if index == -1 or index < 4:
+        return False
+
+    mov1, mov2, add, retn = instructions[(index-3):(index+1)]
+
+    if idc.print_insn_mnem(add) == "pop":
+        if index < 5:
+            return False
+        
+        mov1, mov2, add, pop, retn = instructions[(index-4):(index+1)]
+
     if idc.print_insn_mnem(mov1) != "mov" or idc.print_insn_mnem(mov2) != "mov" or idc.print_insn_mnem(add) != "add" or idc.print_insn_mnem(retn) != "retn":
         return False
     
