@@ -71,10 +71,48 @@ class RustReverserTests(unittest.TestCase):
                 return False
 
         return True
+    
+    def is_rust_option_multiple_return(self, enum_symbol):
+        if enum_symbol.length > 16:
+            return False
+        
+        if enum_symbol.fieldCount < 2:
+            raise RuntimeError("This Option has no Some: {}".format(enum_symbol.id))
+        
+        some_type_id: str = str(enum_symbol.fields[1].underlyingTypeId)
+        if not some_type_id in self.typeSymbols:
+            raise RuntimeError("Some type id not found: {}".format(some_type_id))
+        some_type = self.typeSymbols[some_type_id]
+        
+        value_type_id: str = str(some_type.fields[0].underlyingTypeId)
+        if not value_type_id in self.typeSymbols:
+            raise RuntimeError("Value type id not found: {}".format(value_type_id))
+        value_type = self.typeSymbols[value_type_id]
+        
+        if value_type.fieldCount >= 2:
+            return False
+        
+        # TODO: test this
+        if value_type.fieldCount == 0:
+            return True
+        
+        core_type_id: str = str(value_type.fields[0].underlyingTypeId)
+        if not core_type_id in self.typeSymbols:
+            raise RuntimeError("Core type id not found: {}".format(core_type_id))
+        core_type = self.typeSymbols[core_type_id]
+
+        if core_type.fieldCount >= 2:
+            return False
+
+        return True
 
     def is_multiple_return(self, type_symbol):
-        if type_symbol.type == 3 and "enum2$" in type_symbol.name:
-            # TODO: subtest check for raised exception here
+        if type_symbol.type == 3 and "enum2$<core::option::Option<" in type_symbol.name:
+            try:
+                return self.is_rust_option_multiple_return(type_symbol)
+            except:
+                self.assertTrue(False, msg="is_rust_option_multiple_return failure {}".format(type_symbol.name))
+        elif type_symbol.type == 3 and "enum2$" in type_symbol.name:
             try:
                 return self.is_rust_enum_multiple_return(type_symbol)
             except:
@@ -147,8 +185,10 @@ class RustReverserTests(unittest.TestCase):
             if type_symbol.type == 7:
                 type_symbol = self.unpack_typedef(type_symbol)
 
+            # This takes away most of the "false" false positives, but beware that some real false positives slip through.
             if type_symbol.name == "void":
                 print("This should be multiple return, but is void instead: {}, {}, {}".format(function.id, hex(address), function.name))
+                continue
 
             with self.subTest(msg="{}: {}, {}, {}".format(hex(address), function.id, function.name, return_type_id)):
                 self.assertTrue(self.is_multiple_return(type_symbol))
