@@ -1,13 +1,22 @@
+"""
 import rust_reverser_helper_lib.helpers
 import rust_reverser_helper_lib.rust_strings
 import rust_reverser_helper_lib.disassembly_fixer
 import rust_reverser_helper_lib.signature_fixer
 import rust_reverser_helper_lib.rust_detection
+"""
+
+import helpers
+import rust_strings
+import disassembly_fixer
+import signature_fixer
+import rust_detection
 
 import ida_auto
 import idaapi
 import ida_kernwin
 
+"""
 class ExecuteAll(ida_kernwin.action_handler_t):
     def __init__(self):
         ida_kernwin.action_handler_t.__init__(self)
@@ -42,8 +51,8 @@ class RustReverserHelper(idaapi.plugin_t):
 
 def PLUGIN_ENTRY():
     return RustReverserHelper()
-
 """
+
 def execute_all():
     message: str = ""
     if rust_detection.detect_rust():
@@ -67,9 +76,7 @@ def execute_all():
     ida_auto.auto_wait()
 
     helpers.info_ex("The Rust Reverser Helper has finished running.")
-"""
 
-"""
 if __name__ == "__main__":
     idaapi.require("helpers")
     idaapi.require("rust_strings")
@@ -77,16 +84,5 @@ if __name__ == "__main__":
     idaapi.require("signature_fixer")
     idaapi.require("rust_detection")
 
-    message: str = ""
-    if rust_detection.detect_rust():
-        message = "This binary is most likely compiled in Rust. Do you want to run the rust analyzer?"
-    else:
-        message = "This binary does not seem to be compiled in Rust. Do you want to run the rust analyzer anyway?"
-
-    dialogue_result = ida_kernwin.ask_yn(ida_kernwin.ASKBTN_CANCEL, message)
-    if dialogue_result == ida_kernwin.ASKBTN_YES:
-        execute_all()
-    else:
-        helpers.warn_and_exit()
-"""
+    execute_all()
 
