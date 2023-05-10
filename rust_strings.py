@@ -14,8 +14,12 @@ from typing import List
 import helpers
 
 defined_strings = []
+found_strings = []
 
-def identify_rust_strings():
+def identify_rust_strings() -> List[str]:
+    defined_strings.clear()
+    found_strings.clear()
+    
     create_rust_string_type()
 
     for function_address in idautils.Functions():
@@ -23,7 +27,7 @@ def identify_rust_strings():
             defined_strings.clear()
             return
     
-    defined_strings.clear()
+    return found_strings
 
 def create_rust_string_type():
     id = ida_struct.get_struc_id("RustString")
@@ -157,13 +161,19 @@ def create_inline_rust_string_label(address: int, length: int) -> str:
     return create_rust_string_label("ia", address, length)
 
 def create_rust_string_label(prefix: str, address: int, length: int) -> str:
-    label: str = prefix
+    real_string: str = ""
+    for i in range(length):
+        real_string = real_string + chr(idc.get_wide_byte(address + i))
+    found_strings.append(real_string)
 
     if length > 24:
         length = 24
 
+    label: str = prefix
+
     for i in range(length):
         character: str = chr(idc.get_wide_byte(address + i))
+        real_string = real_string + character
         if i == 0 and character.isalpha():
             character = character.upper()
         label += character

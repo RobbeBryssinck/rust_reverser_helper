@@ -2,10 +2,14 @@ import unittest
 import json
 from types import SimpleNamespace
 import helpers
+import rust_string_extractor
+import rust_reverser_helper
 
 import idaapi
 import idautils
 import ida_loader
+
+reverser = rust_reverser_helper.RustReverserHelper()
 
 class RustReverserTests(unittest.TestCase):
     def setUp(self):
@@ -219,7 +223,22 @@ class RustReverserTests(unittest.TestCase):
 
             with self.subTest(msg="{}: {}, {}, {}".format(hex(address), function.id, function.name, return_type_id)):
                 self.assertTrue(self.is_multiple_return(type_symbol))
+    
+    def test_rust_user_defined_strings_false_negatives(self):
+        string_extractor = rust_string_extractor.RustStringExtractor()
+        string_extractor.extract_strings_from_files("../../src/")
+        for rust_string in string_extractor.strings:
+            with self.subTest(msg="Rust string: {}".format(rust_string)):
+                self.assertIn(rust_string, reverser.rust_strings)
 
 if __name__ == "__main__":
+    idaapi.require("helpers")
+    idaapi.require("rust_strings")
+    idaapi.require("disassembly_fixer")
+    idaapi.require("signature_fixer")
+    idaapi.require("rust_detection")
+    idaapi.require("rust_reverser_helper")
+
+    reverser.execute_all()
     unittest.TextTestRunner().run(unittest.TestLoader().loadTestsFromTestCase(RustReverserTests))
 

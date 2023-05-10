@@ -53,29 +53,33 @@ def PLUGIN_ENTRY():
     return RustReverserHelper()
 """
 
-def execute_all():
-    message: str = ""
-    if rust_detection.detect_rust():
-        message = "This binary is most likely compiled in Rust. Do you want to run the rust analyzer?"
-    else:
-        message = "This binary does not seem to be compiled in Rust. Do you want to run the rust analyzer anyway?"
+class RustReverserHelper():
+    def __init__(self):
+        self.rust_strings = []
 
-    dialogue_result = ida_kernwin.ask_yn(ida_kernwin.ASKBTN_CANCEL, message)
-    if dialogue_result != ida_kernwin.ASKBTN_YES:
-        helpers.warn_and_exit()
+    def execute_all(self):
+        message: str = ""
+        if rust_detection.detect_rust():
+            message = "This binary is most likely compiled in Rust. Do you want to run the rust analyzer?"
+        else:
+            message = "This binary does not seem to be compiled in Rust. Do you want to run the rust analyzer anyway?"
+
+        dialogue_result = ida_kernwin.ask_yn(ida_kernwin.ASKBTN_CANCEL, message)
+        if dialogue_result != ida_kernwin.ASKBTN_YES:
+            return
     
-    print("Running full suite of the Rust Reverser Helper...")
+        print("Running full suite of the Rust Reverser Helper...")
 
-    helpers.get_platform().init()
+        helpers.get_platform().init()
 
-    disassembly_fixer.fix_disassembly()
-    ida_auto.auto_wait()
-    rust_strings.identify_rust_strings()
-    ida_auto.auto_wait()
-    signature_fixer.fix_multiple_return_signatures()
-    ida_auto.auto_wait()
+        disassembly_fixer.fix_disassembly()
+        ida_auto.auto_wait()
+        self.rust_strings = rust_strings.identify_rust_strings()
+        ida_auto.auto_wait()
+        signature_fixer.fix_multiple_return_signatures()
+        ida_auto.auto_wait()
 
-    helpers.info_ex("The Rust Reverser Helper has finished running.")
+        helpers.info_ex("The Rust Reverser Helper has finished running.")
 
 if __name__ == "__main__":
     idaapi.require("helpers")
@@ -84,5 +88,6 @@ if __name__ == "__main__":
     idaapi.require("signature_fixer")
     idaapi.require("rust_detection")
 
-    execute_all()
+    reverser = RustReverserHelper()
+    reverser.execute_all()
 
