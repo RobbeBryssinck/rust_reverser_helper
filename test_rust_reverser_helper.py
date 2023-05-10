@@ -14,17 +14,32 @@ class RustReverserTests(unittest.TestCase):
         self.symbols = json.loads(data, object_hook=lambda d: SimpleNamespace(**d))
         self.base = idaapi.get_imagebase()
 
+    def is_multiple_return(self, type_symbol):
+        # MRR is only valid with one 128-bit members or two members smaller than 128 bits combined.
+        if type_symbol.memberVariableCount > 2:
+            return False
+
+        size: int = 0
+        for member_id in type_symbol.memberVariableIds:
+            if member_id in self.symbols.typeSymbols:
+                size = size + self.symbols.typeSymbols[member_id].length
+            
+        if size == 0 or size > 16:
+            return False
+    
+        return True
+
     def test_multiple_return_false_negatives(self):
         for function in self.symbols.functionSymbols:
             return_type_id = function.returnTypeId
             
             if not return_type_id in self.symbols.typeSymbols:
                 continue
-            type = self.symbols.typeSymbols[return_type_id]
-            
-            if type.length <= 8 or type.length > 16:
+            type_symbol = self.symbols.typeSymbols[return_type_id]
+
+            if not self.is_multiple_return(type_symbol):
                 continue
-                
+
             address = self.base + function.virtualAddress
             function_details = helpers.get_function_details(address)
 
@@ -48,10 +63,10 @@ class RustReverserTests(unittest.TestCase):
 
             if not return_type_id in self.symbols.typeSymbols:
                 continue
-            type = self.symbols.typeSymbols[return_type_id]
+            type_symbol = self.symbols.typeSymbols[return_type_id]
 
             with self.subTest(msg="{}: {}, {}".format(hex(address), function.id, function.name)):
-                self.assertTrue(type.length > 8 and type.length <= 16, "{}: {}".format(hex(address), function.id))
+                self.assertTrue(self.is_multiple_return(type_symbol))
 
 
 if __name__ == "__main__":
