@@ -173,3 +173,7 @@ def does_label_exist(label: str) -> bool:
 
 def apply_rust_string_type(address: int):
     idc.SetType(address, "RustString")
+
+if __name__ == "__main__":
+    identify_rust_strings()
+
