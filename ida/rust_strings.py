@@ -20,16 +20,8 @@ def is_global_rust_string(address: int):
     if not is_in_data_section(address):
         return False
 
+    # TODO: can this be simplified using ida api?
     length: int = idc.get_qword(address + 8)
-
-    # TODO: these heuristics are wrong, the compiler makes no such guarantees.
-    # Global Rust strings should have the string data right before the str structure.
-    # It is possible that the compiler injects padding for 8-byte alignment.
-    string_address: int = idc.get_qword(address)
-    padding: int = address - string_address - length
-    if padding < 0 or padding >= 8:
-        return False
-
     for i in range(length):
         if not chr(idc.get_wide_byte(address + i)).isascii():
             return False
