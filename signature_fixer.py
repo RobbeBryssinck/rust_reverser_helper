@@ -45,11 +45,9 @@ def does_function_return_multiple(function_start: int) -> bool:
 
         # If a call is made and the second return register is not filled after, it does not exist,
         # as the second return register can be trashed in a function call.
-        # TODO: check for embedded return value optimization here.
         if helpers.is_calling_instruction(insn):
             break
 
-        # TODO: check for embedded return value optimization here.
         if helpers.is_jump_outside(insn, function_start, idc.find_func_end(function_start)):
             break
 
@@ -66,7 +64,6 @@ def does_function_return_multiple(function_start: int) -> bool:
             break
 
     if is_second_return_register_stored:
-        # TODO: maybe the call site should be checked regardless, to avoid instances where rdx is detected during dereference.
         print("Reason: second return register stored.")
         return True
 

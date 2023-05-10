@@ -135,8 +135,6 @@ class RustReverserTests(unittest.TestCase):
             except:
                 self.assertTrue(False, msg="is_rust_enum_multiple_return failure {}".format(type_symbol.name))
             
-        # TODO: handle generic unions
-
         union_id_to_length = {}
 
         real_field_count = type_symbol.fieldCount
@@ -202,7 +200,6 @@ class RustReverserTests(unittest.TestCase):
         for address in idautils.Functions():
             function_details = helpers.get_function_details(address)
             
-            # TODO: change this
             if function_details.rettype.get_size() != 16:
                 continue
 

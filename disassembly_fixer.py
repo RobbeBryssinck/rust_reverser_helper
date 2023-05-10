@@ -11,8 +11,6 @@ from typing import List
 
 import helpers
 
-# TODO: maybe decompile all again after fixing all functions?
-
 problematic_functions = []
 
 def fix_disassembly() -> List[int]:

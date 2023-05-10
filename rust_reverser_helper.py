@@ -1,11 +1,3 @@
-"""
-import rust_reverser_helper_lib.helpers
-import rust_reverser_helper_lib.rust_strings
-import rust_reverser_helper_lib.disassembly_fixer
-import rust_reverser_helper_lib.signature_fixer
-import rust_reverser_helper_lib.rust_detection
-"""
-
 import helpers
 import rust_strings
 import disassembly_fixer
@@ -15,43 +7,6 @@ import rust_detection
 import ida_auto
 import idaapi
 import ida_kernwin
-
-"""
-class ExecuteAll(ida_kernwin.action_handler_t):
-    def __init__(self):
-        ida_kernwin.action_handler_t.__init__(self)
-        
-    def activate(self, ctx):
-        #execute_all()
-        print("hello")
-
-class RustReverserHelper(idaapi.plugin_t):
-    wanted_name = "Rust Reverser Helper"
-    wanted_hotkey = "Alt-Shift-R"
-    flags = idaapi.PLUGIN_UNL
-
-    comment = "Detects strings, fixes disassembly and corrects function signatures for Rust binaries."
-    help = "If you are unsure whether the binary is compiled in Rust, this plugin will detect that on run."
-
-    def init(self):
-        return idaapi.PLUGIN_OK
-    
-    def run(self, args):
-        if ida_kernwin.register_action(ida_kernwin.action_desc_t(
-            "RustReverserHelper:ExecuteAll",
-            "Execute all",
-            ExecuteAll()
-        )):
-            print("Registered 'Execute all'.")
-            if ida_kernwin.attach_action_to_menu("Edit/Plugins/Rust Reverser Helper", "RustReverserHelper:ExecuteAll", ida_kernwin.SETMENU_APP):
-                print("Attached to menu.")
-    
-    def term(self):
-        pass
-
-def PLUGIN_ENTRY():
-    return RustReverserHelper()
-"""
 
 class RustReverserHelper():
     def __init__(self):

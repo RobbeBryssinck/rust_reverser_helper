@@ -237,7 +237,6 @@ def set_string_comment(address: int, label: str) -> bool:
             print(e.args[0])
             return False
 
-    # TODO: third arg?
     result: bool = idc.set_cmt(address, label, False)
 
     if result:
