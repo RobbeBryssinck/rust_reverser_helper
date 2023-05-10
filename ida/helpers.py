@@ -67,15 +67,29 @@ class Platform():
             print("Architecture is not supported yet: '{}'.".format(platform_type))
             warn_and_exit()
     
+    def is_intel_x86(self) -> bool:
+        return self.architecture == Platform.Architecture.X64 or self.architecture == Platform.Architecture.X86
+
+    def is_x64(self) -> bool:
+        return self.architecture == Platform.Architecture.X64
+    
+    def is_x86(self) -> bool:
+        return self.architecture == Platform.Architecture.X86
+
+    def is_arm(self) -> bool:
+        return self.architecture == Platform.Architecture.ARM64 or self.architecture == Platform.Architecture.ARM32
+    
+    def is_arm64(self) -> bool:
+        return self.architecture == Platform.Architecture.ARM64
+
+    def is_arm32(self) -> bool:
+        return self.architecture == Platform.Architecture.ARM32
+
     def is_pe_x64(self) -> bool:
         return self.platform == (Platform.FileFormat.PE, Platform.Architecture.X64)
     
     def is_elf_x64(self) -> bool:
         return self.platform == (Platform.FileFormat.ELF, Platform.Architecture.X64)
-    
-    # ARM has the same ABI across different operating systems.
-    def is_arm64(self) -> bool:
-        return self.architecture == Platform.Architecture.ARM64
 
 def get_platform() -> Platform:
     return get_platform.platform

@@ -101,6 +101,7 @@ def get_argument_annotation(position: int) -> str:
         if position == 5:
             return annotation.format("r9")
         return ""
+    # ARM has the same ABI across different operating systems.
     elif platform.is_arm64():
         if position == 0:
             return annotation.format("X0")

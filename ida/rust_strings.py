@@ -14,12 +14,13 @@ import helpers
 
 defined_strings = []
 
-# TODO: architecture independence (start with 32 vs 64 bit).
 def identify_rust_strings():
     create_rust_string_type()
 
     for function_address in idautils.Functions():
-        identify_rust_strings_in_function(function_address)
+        if not identify_rust_strings_in_function(function_address):
+            defined_strings.clear()
+            return
     
     defined_strings.clear()
 
@@ -47,12 +48,21 @@ def create_rust_string_type():
     ida_typeinf.parse_decl(tif, None, "unsigned __int64 length;", ida_typeinf.PT_TYP)
     ida_struct.set_member_tinfo(struc, ida_struct.get_member(struc, 8), 0, tif, 0)
 
-def identify_rust_strings_in_function(function_address: str):
+def identify_rust_strings_in_function(function_address: str) -> bool:
     instructions: List[int] = helpers.get_instructions_from_function(function_address)
+
+    load_instruction: str = ""
+    if helpers.get_platform().is_arm():
+        load_instruction = "ADRL"
+    elif helpers.get_platform().is_intel_x86():
+        load_instruction = "lea"
+    else:
+        print("Architecture is not supported (has no load instruction for strings).")
+        return False
 
     viable_list_length: int = len(instructions) - 2
     for i in range(viable_list_length):
-        if idc.print_insn_mnem(instructions[i]) != "lea":
+        if idc.print_insn_mnem(instructions[i]) != load_instruction:
             continue
 
         source_address: int = idc.get_operand_value(instructions[i], 1)
@@ -69,6 +79,8 @@ def identify_rust_strings_in_function(function_address: str):
             label: str = create_rust_string_label(idc.get_qword(source_address), string_length)
             define_rust_string(source_address, label)
             continue
+    
+    return True
 
 
 def is_global_rust_string(address: int):
@@ -97,7 +109,7 @@ def is_global_rust_string_empty(address: int):
 
 def is_in_data_section(address: int) -> bool:
     segment = idaapi.get_visible_segm_name(idaapi.getseg(address))
-    return segment == "_rodata" or segment == "_rdata" or segment == "_data_rel_ro"
+    return segment == "_rodata" or segment == "_rdata" or segment == "_data_rel_ro" or segment == ".rodata" or segment == ".rdata" or segment == ".data.rel.ro"
 
 def create_rust_string_label(address: int, length: int) -> str:
     label: str = "ra"
@@ -183,5 +195,6 @@ def apply_rust_string_type(address: int):
     idc.SetType(address, "RustString")
 
 if __name__ == "__main__":
+    idaapi.require("helpers")
     identify_rust_strings()
 
