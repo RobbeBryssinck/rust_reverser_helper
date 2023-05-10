@@ -32,6 +32,7 @@ def does_function_return_multiple(address: int) -> bool:
 
     mov1, mov2, add, retn = instructions[(index-3):(index+1)]
 
+    # This is an edge case where the second-to-last instruction is a "pop rbp" sometimes.
     if idc.print_insn_mnem(add) == "pop":
         if index < 5:
             return False
