@@ -15,6 +15,9 @@ class RustReverserTests(unittest.TestCase):
         self.base = idaapi.get_imagebase()
         self.typeSymbols = vars(self.symbols.typeSymbols)
         self.functionSymbols = vars(self.symbols.functionSymbols)
+        self.function_symbols_by_address = {}
+        for function_id, function in self.functionSymbols.items():
+            self.function_symbols_by_address[function.virtualAddress] = function
 
     def is_multiple_return(self, type_symbol):
         # MRR is only valid with one 128-bit members or two members smaller than 128 bits combined.
@@ -59,29 +62,30 @@ class RustReverserTests(unittest.TestCase):
             with self.subTest(msg="{}: {}, {}".format(hex(address), function_id, function.name)):
                 self.assertEqual(function_details.rettype.get_size(), 16)
 
-"""
     def test_multiple_return_false_positives(self):
         for address in idautils.Functions():
             function_details = helpers.get_function_details(address)
             
+            # TODO: change this
             if function_details.rettype.get_size() != 16:
                 continue
 
             virtual_address = address - self.base
 
-            if not virtual_address in self.functionSymbols:
+            if not virtual_address in self.function_symbols_by_address:
                 continue
-            function = self.functionSymbols[virtual_address]
+            function = self.function_symbols_by_address[virtual_address]
 
-            return_type_id = function.returnTypeId
+            return_type_id = str(function.returnTypeId)
 
             if not return_type_id in self.typeSymbols:
                 continue
             type_symbol = self.typeSymbols[return_type_id]
 
+            print("This should be multiple return: {} {}".format(function.id, hex(address)))
+
             with self.subTest(msg="{}: {}, {}".format(hex(address), function.id, function.name)):
                 self.assertTrue(self.is_multiple_return(type_symbol))
-"""
 
 if __name__ == "__main__":
     unittest.TextTestRunner().run(unittest.TestLoader().loadTestsFromTestCase(RustReverserTests))
