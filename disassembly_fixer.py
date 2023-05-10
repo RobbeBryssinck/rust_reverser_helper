@@ -5,11 +5,11 @@ import ida_ua
 import ida_funcs
 import ida_auto
 import ida_problems
-import ida_hexrays
 
 from typing import List
 
 import helpers
+import time
 
 problematic_functions = []
 
@@ -86,4 +86,7 @@ def verify_functions():
             print("\t* 0x%08x" % function)
 
 if __name__ == "__main__":
+    t1 = time.time()
     fix_disassembly()
+    t2 = time.time()
+    print("Time: {}".format(t2-t1))

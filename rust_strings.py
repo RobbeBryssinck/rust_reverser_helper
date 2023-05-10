@@ -9,9 +9,10 @@ import ida_kernwin
 import ida_typeinf
 import ida_name
 
-from typing import List
-
 import helpers
+
+from typing import List
+import time
 
 defined_strings = []
 found_strings = []
@@ -262,5 +263,9 @@ def apply_rust_string_type(address: int):
 
 if __name__ == "__main__":
     idaapi.require("helpers")
+    
+    t1 = time.time()
     identify_rust_strings()
+    t2 = time.time()
+    print("Time: {}".format(t2-t1))
 

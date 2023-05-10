@@ -5,6 +5,7 @@ import ida_typeinf
 import helpers
 
 from typing import List
+import time
 
 # TODO: maybe decompile all again after fixing all functions?
 
@@ -193,5 +194,8 @@ def get_argument_annotation(position: int) -> str:
         return ""
 
 if __name__ == "__main__":
+    t1 = time.time()
     fix_multiple_return_signatures()
+    t2 = time.time()
+    print("Time: {}".format(t2-t1))
 
