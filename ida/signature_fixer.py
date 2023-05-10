@@ -1,8 +1,6 @@
 import idc
 import idautils
 import ida_typeinf
-import idaapi
-import ida_nalt
 
 import helpers
 
