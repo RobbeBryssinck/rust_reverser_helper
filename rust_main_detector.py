@@ -46,7 +46,7 @@ def detect_rust_main() -> int:
 
 
 if __name__ == "__main__":
-    idaapi.requires("helpers")
+    idaapi.require("helpers")
 
     rust_main_address: int = detect_rust_main()
 
