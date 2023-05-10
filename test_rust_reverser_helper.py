@@ -9,7 +9,7 @@ import idautils
 class RustReverserTests(unittest.TestCase):
     def setUp(self):
         data = ""
-        with open("binding.json") as file:
+        with open("rust_sample.json") as file:
             data = file.read()
         self.symbols = json.loads(data, object_hook=lambda d: SimpleNamespace(**d))
         self.base = idaapi.get_imagebase()
@@ -19,11 +19,49 @@ class RustReverserTests(unittest.TestCase):
         for function_id, function in self.functionSymbols.items():
             self.function_symbols_by_address[function.virtualAddress] = function
 
+    # TODO: maybe add checks like name checking to make sure enums are being detected properly?
+    def is_rust_enum_multiple_return(self, enum_symbol):
+        if enum_symbol.length > 16:
+            return False
+        
+        type_length: int = 0
+        first_variant: bool = True
+
+        for variant in enum_symbol.fields[:-1]:
+            variant_type_id: str = str(variant.underlyingTypeId)
+            if not variant_type_id in self.typeSymbols:
+                raise RuntimeError("Variant type id not found: {}".format(variant_type_id))
+            variant_type = self.typeSymbols[variant_type_id]
+
+            value_type_id: str = str(variant_type.fields[0].underlyingTypeId)
+            if not value_type_id in self.typeSymbols:
+                raise RuntimeError("Value type id not found: {}".format(value_type_id))
+            value_type = self.typeSymbols[value_type_id]
+
+            if value_type.fieldCount >= 2:
+                return False
+
+            core_type_id: str = str(value_type.fields[0].underlyingTypeId)
+            if not core_type_id in self.typeSymbols:
+                raise RuntimeError("Core type id not found: {}".format(core_type_id))
+            core_type = self.typeSymbols[core_type_id]
+
+            if core_type.fieldCount >= 2:
+                return False
+
+            if first_variant:
+                type_length = core_type.length
+                first_variant = False
+                continue
+
+            if type_length != core_type.length:
+                return False
+
+        return True
+
     def is_multiple_return(self, type_symbol):
-        # Edge case where enums are embedded with false null types.
-        # TODO: this is hacky, find the real problem.
-        if "enum2$" in type_symbol.name and type_symbol.length == 16:
-            return True
+        if type_symbol.type == 3 and "enum2$" in type_symbol.name:
+            return self.is_rust_enum_multiple_return(type_symbol)
         
         # MRR is only valid with one 128-bit members or two members smaller than 128 bits combined.
         if type_symbol.memberVariableCount > 2 or type_symbol.memberVariableCount == 0:
