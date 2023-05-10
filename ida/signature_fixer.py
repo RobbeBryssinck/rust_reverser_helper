@@ -8,14 +8,18 @@ import helpers
 
 from typing import List
 
-# TODO: check return type for length, keep original if length == 16 bytes.
-
 def fix_multiple_return_signatures():
     for function_address in idautils.Functions():
         if does_function_return_multiple(function_address):
             fix_multiple_return_signature(function_address)
 
 def does_function_return_multiple(address: int) -> bool:
+    # If the return type already has the length of a multiple return value,
+    # the fixer can ignore this function.
+    function_details = helpers.get_function_details(address)
+    if function_details.rettype.get_size() == helpers.get_multiple_return_size():
+        return False
+
     instructions: List[int] = helpers.get_instructions_from_function(address)
     
     if len(instructions) < 4:
@@ -79,11 +83,8 @@ def fix_multiple_return_signature(address: int):
     idc.apply_type(address, result, idc.TINFO_DEFINITE)
 
 def generate_multiple_return_signature(address: int) -> str:
-    function_tinfo = idaapi.tinfo_t()
-    ida_nalt.get_tinfo(function_tinfo, address)
-    function_details = idaapi.func_type_data_t()
-    function_tinfo.get_func_details(function_details)
-    
+    function_details = helpers.get_function_details(address)
+
     return_registers_annotation: str = get_return_registers_annotation()
 
     arguments: str = ""

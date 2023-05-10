@@ -4,6 +4,7 @@ import idaapi
 import ida_auto
 import ida_hexrays
 import ida_funcs
+import ida_nalt
 
 from typing import List
 from enum import Enum
@@ -29,6 +30,15 @@ def decompile_function(func_start: int):
     ida_hexrays.decompile_func(ida_funcs.get_func(func_start), hf)
 
     ida_auto.auto_wait()
+
+def get_function_details(address: int):
+    function_tinfo = idaapi.tinfo_t()
+    ida_nalt.get_tinfo(function_tinfo, address)
+    
+    function_details = idaapi.func_type_data_t()
+    function_tinfo.get_func_details(function_details)
+
+    return function_details
 
 class Platform():
     class FileFormat(Enum):
@@ -60,7 +70,7 @@ class Platform():
                 self.architecture = Platform.Architecture.ARM64
         elif "32" in platform_type:
             if "x86" in platform_type:
-                self.architecture = Platform.Architecture.X32
+                self.architecture = Platform.Architecture.X86
             elif "arm" in platform_type:
                 self.architecture = Platform.Architecture.ARM32
 
@@ -99,6 +109,9 @@ class Platform():
     
     def is_elf_x64(self) -> bool:
         return self.platform == (Platform.FileFormat.ELF, Platform.Architecture.X64)
+    
+    def is_64_bit(self) -> bool:
+        return self.architecture == Platform.Architecture.X64 or self.architecture == Platform.Architecture.ARM64
 
 def get_platform() -> Platform:
     return get_platform.platform
@@ -147,4 +160,10 @@ def is_returning_instruction(address: int) -> bool:
         return operator == "retn"
     else:
         return False
+
+def get_multiple_return_size() -> int:
+    if get_platform().is_64_bit():
+        return 16
+    else:
+        return 8
 
