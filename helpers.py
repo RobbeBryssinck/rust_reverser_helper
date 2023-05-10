@@ -135,6 +135,9 @@ def is_second_return_reg_in_operand(address: int, position: int) -> bool:
         return False
 
     if platform.is_intel_x86():
+        if "+rdx" in operand or "+edx" in operand or "+dx" in operand or "+dl" in operand:
+            return False
+        
         return "rdx" in operand or "edx" in operand or "dx" in operand or "dl" in operand
     else:
         return False
