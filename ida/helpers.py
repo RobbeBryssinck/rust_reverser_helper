@@ -96,3 +96,36 @@ def get_platform() -> Platform:
 
 get_platform.platform: Platform = Platform()
 
+def is_operand_return_register(address: int, position: int) -> bool:
+    platform = get_platform()
+
+    operand: str = idc.print_operand(address, position)
+
+    if operand == "":
+        return False
+
+    if platform.is_intel_x86():
+        return operand == "rdx" or operand == "edx" or operand == "dx" or operand == "dl"
+    else:
+        return False
+
+def is_moving_instruction(address: int) -> bool:
+    platform = get_platform()
+
+    operator: str = idc.print_insn_mnem(address)
+
+    if platform.is_intel_x86():
+        return operator == "mov" or operator == "movsxd" or operator == "movaps"
+    else:
+        return False
+
+def is_calling_instruction(address: int) -> bool:
+    platform = get_platform()
+
+    operator: str = idc.print_insn_mnem(address)
+
+    if platform.is_intel_x86():
+        return operator == "call"
+    else:
+        return False
+

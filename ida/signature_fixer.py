@@ -41,7 +41,7 @@ def does_function_return_multiple(address: int) -> bool:
 
         # If a call is made and the second return register is not filled after, it does not exist,
         # as the second return register can be trashed in a function call.
-        if idc.print_insn_mnem(insn) == "call":
+        if helpers.is_calling_instruction(insn):
             break
 
         position: int = find_second_return_register_position(insn)
@@ -49,7 +49,7 @@ def does_function_return_multiple(address: int) -> bool:
         if position == -1:
             continue
         elif position == 0:
-            if idc.print_insn_mnem(insn) == "mov":
+            if helpers.is_moving_instruction(insn):
                 is_second_return_register_stored = True
                 break
         elif position == 1:
@@ -60,28 +60,12 @@ def does_function_return_multiple(address: int) -> bool:
 
 # Returns -1 if second return register is not used.
 def find_second_return_register_position(address: int) -> int:
-    if is_operand_return_register(address, 0):
+    if helpers.is_operand_return_register(address, 0):
         return 0
-    elif is_operand_return_register(address, 1):
+    elif helpers.is_operand_return_register(address, 1):
         return 1
     else:
         return -1
-
-def is_operand_return_register(address: int, position: int) -> bool:
-    platform = helpers.get_platform()
-
-    operand: str = idc.print_operand(address, position)
-
-    if operand == "":
-        return False
-
-    if platform.is_intel_x86():
-        if operand == "rdx" or operand == "edx" or operand == "dx" or operand == "dl":
-            return True
-        else:
-            return False
-    else:
-        return False
 
 def fix_multiple_return_signature(address: int):
     declaration: str = generate_multiple_return_signature(address)
