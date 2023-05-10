@@ -1,3 +1,4 @@
+import os
 import unittest
 import json
 from types import SimpleNamespace
@@ -10,6 +11,7 @@ import idautils
 import ida_loader
 import ida_hexrays
 import ida_funcs
+import ida_kernwin
 
 reverser = rust_reverser_helper.RustReverserHelper()
 
@@ -227,8 +229,26 @@ class RustReverserTests(unittest.TestCase):
                 self.assertTrue(self.is_multiple_return(type_symbol))
     
     def test_rust_user_defined_strings_false_negatives(self):
+        ida_kernwin.info("Input the Rust source directory in the following form, or press 'cancel' to skip the string tests.")
+
+        while True:
+            source_directory = ida_kernwin.ask_str("", 0, "")
+
+            if source_directory == None:
+                print("Cancelling rust string tests.")
+                return
+
+            if not os.path.isdir(source_directory):
+                if not os.path.exists(source_directory):
+                    ida_kernwin.warning("Directory '{}' does not exist.".format(source_directory))
+                else:
+                    ida_kernwin.warning("Path '{}' is not a directory.".format(source_directory))
+                continue
+
+            break
+
         string_extractor = rust_string_extractor.RustStringExtractor()
-        string_extractor.extract_strings_from_files("../../src/")
+        string_extractor.extract_strings_from_files(source_directory)
         for rust_string in string_extractor.strings:
             with self.subTest(msg="Rust string: {}".format(rust_string)):
                 if rust_string in reverser.rust_strings:
