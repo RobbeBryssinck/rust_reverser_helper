@@ -10,6 +10,7 @@ import ida_struct
 import ida_bytes
 import ida_idaapi
 import ida_kernwin
+import ida_typeinf
 
 from typing import List
 
@@ -32,10 +33,19 @@ def create_rust_string_type():
             return
         elif dialogue_result == ida_kernwin.ASKBTN_CANCEL:
             helpers.warn_and_exit()
-
+    
     id = ida_struct.add_struc(-1, "RustString")
+    struc = ida_struct.get_struc(id)
+
+    tif = idaapi.tinfo_t()
+
     idc.add_struc_member(id, "data_ptr", ida_idaapi.BADADDR, ida_bytes.off_flag()|ida_bytes.FF_DATA|ida_bytes.FF_QWORD, 0, 8)
+    ida_typeinf.parse_decl(tif, None, "char * data_ptr;", ida_typeinf.PT_TYP)
+    ida_struct.set_member_tinfo(struc, ida_struct.get_member(struc, 0), 0, tif, 0)
+    
     idc.add_struc_member(id, "length", ida_idaapi.BADADDR, (ida_bytes.FF_QWORD|ida_bytes.FF_DATA)&0xFFFFFFFF, -1, 8)
+    ida_typeinf.parse_decl(tif, None, "unsigned __int64 length;", ida_typeinf.PT_TYP)
+    ida_struct.set_member_tinfo(struc, ida_struct.get_member(struc, 8), 0, tif, 0)
 
 def identify_rust_strings_in_function(function_address: str):
     instructions: List[int] = helpers.get_instructions_from_function(function_address)
@@ -153,3 +163,5 @@ def mutate_duplicate_label(label: str) -> str:
 def does_label_exist(label: str) -> bool:
     return idc.get_name_ea_simple(label) != 0xffffffffffffffff
 
+def apply_rust_string_type(address: int):
+    idc.SetType(address, "RustString")
