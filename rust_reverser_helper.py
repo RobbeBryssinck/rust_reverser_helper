@@ -9,6 +9,8 @@ import ida_auto
 import idaapi
 import ida_kernwin
 
+import time
+
 class RustReverserHelper():
     def __init__(self):
         self.rust_strings = []
@@ -27,6 +29,8 @@ class RustReverserHelper():
     
         print("Running full suite of the Rust Reverser Helper...")
 
+        t1 = time.time()
+
         helpers.get_platform().init()
 
         self.fixed_functions = disassembly_fixer.fix_disassembly()
@@ -36,6 +40,11 @@ class RustReverserHelper():
         signature_fixer.fix_multiple_return_signatures()
         ida_auto.auto_wait()
         rust_main_address: int = rust_main_detector.detect_rust_main()
+
+        t2 = time.time()
+
+        print("Time: {}".format(t2-t1))
+
         if rust_main_address == 0:
             print("Rust main not detected.")
             helpers.info_ex("The Rust Reverser Helper has finished running. The RustMain function was not detected.\n\nBeware that Ida's decompiler has not fully refreshed the code at all call sites.\nIf you see unassigned local variables (variables in red), decompile the function twice (hit F5 twice).")
