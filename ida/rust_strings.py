@@ -121,7 +121,7 @@ def is_inline_rust_string(instructions: List[int]) -> bool:
     # mov qword ptr [rbp + XXh + var_a], rax
     # mov qword ptr [rbp + XXh + var_a + 8], len
 
-    if not helpers.is_load_address_instruction() or not helpers.is_moving_instruction(mov_data) or not helpers.is_moving_instruction(mov_len):
+    if not helpers.is_load_address_instruction(lea) or not helpers.is_moving_instruction(mov_data) or not helpers.is_moving_instruction(mov_len):
         return False
 
     if idc.get_operand_type(lea, 0) != idc.o_reg or idc.get_operand_type(mov_data, 0) != idc.o_displ or idc.get_operand_type(mov_len, 0) != idc.o_displ or idc.get_operand_type(mov_len, 1) != idc.o_imm:

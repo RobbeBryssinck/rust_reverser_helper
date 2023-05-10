@@ -118,7 +118,7 @@ def get_platform() -> Platform:
 
 get_platform.platform: Platform = Platform()
 
-def is_operand_return_register(address: int, position: int) -> bool:
+def is_second_return_reg_in_operand(address: int, position: int) -> bool:
     platform = get_platform()
 
     operand: str = idc.print_operand(address, position)
@@ -127,7 +127,7 @@ def is_operand_return_register(address: int, position: int) -> bool:
         return False
 
     if platform.is_intel_x86():
-        return operand == "rdx" or operand == "edx" or operand == "dx" or operand == "dl"
+        return "rdx" in operand or "edx" in operand or "dx" in operand or "dl" in operand
     else:
         return False
 

@@ -76,9 +76,9 @@ def does_function_return_multiple(function_start: int) -> bool:
 
 # Returns -1 if second return register is not used.
 def find_second_return_register_position(address: int) -> int:
-    if helpers.is_operand_return_register(address, 0):
+    if helpers.is_second_return_reg_in_operand(address, 0):
         return 0
-    elif helpers.is_operand_return_register(address, 1):
+    elif helpers.is_second_return_reg_in_operand(address, 1):
         return 1
     else:
         return -1
