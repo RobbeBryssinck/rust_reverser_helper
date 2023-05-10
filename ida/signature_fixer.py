@@ -102,6 +102,23 @@ def get_argument_annotation(position: int) -> str:
         if position == 5:
             return annotation.format("r9")
         return ""
+    elif platform == "ELF64 for ARM64 (Shared object)":
+        if position == 0:
+            return annotation.format("X0")
+        if position == 1:
+            return annotation.format("X1")
+        if position == 2:
+            return annotation.format("X2")
+        if position == 3:
+            return annotation.format("X3")
+        if position == 4:
+            return annotation.format("X4")
+        if position == 5:
+            return annotation.format("X5")
+        if position == 6:
+            return annotation.format("X6")
+        if position == 7:
+            return annotation.format("X7")
     else:
         return ""
 
