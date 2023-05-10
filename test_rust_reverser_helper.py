@@ -128,15 +128,34 @@ class RustReverserTests(unittest.TestCase):
             
         # TODO: handle generic unions
 
-        # MRR is only valid with one 128-bit members or two members smaller than 128 bits combined.
-        if type_symbol.fieldCount == 0 or type_symbol.fieldCount > 2:
-            return False
-        
+        union_id_to_length = {}
+
+        real_field_count = type_symbol.fieldCount
+
         size: int = 0
         for field in type_symbol.fields:
-            field_type_id: str = str(field.underlyingTypeId)
-            if field_type_id in self.typeSymbols:
-                size = size + self.typeSymbols[field_type_id].length
+            field_length = 0
+            underlying_type = self.typeSymbols[str(field.underlyingTypeId)]
+            
+            if field.isAnonymousUnion:
+                if not str(field.unionId) in union_id_to_length:
+                    union_id_to_length[str(field.unionId)] = underlying_type.length
+                else:
+                    real_field_count = real_field_count - 1
+                    union_length = union_id_to_length[str(field.unionId)]
+                    if underlying_type.length > union_length:
+                        union_id_to_length[str(field.unionId)] = underlying_type.length
+                    continue
+                
+                field_length = union_id_to_length[str(field.unionId)]
+            else:
+                field_length = underlying_type.length
+            
+            size = size + field_length
+        
+        # MRR is only valid with one 128-bit members or two members smaller than 128 bits combined.
+        if real_field_count == 0 or real_field_count > 2:
+            return False
         
         print("Return type: {}, size: {}".format(type_symbol.id, size))
 

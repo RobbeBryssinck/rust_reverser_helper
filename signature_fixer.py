@@ -66,6 +66,7 @@ def does_function_return_multiple(function_start: int) -> bool:
             break
 
     if is_second_return_register_stored:
+        # TODO: maybe the call site should be checked regardless, to avoid instances where rdx is detected during dereference.
         print("Reason: second return register stored.")
         return True
 
