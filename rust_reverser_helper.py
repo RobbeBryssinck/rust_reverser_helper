@@ -35,7 +35,7 @@ class RustReverserHelper():
         signature_fixer.fix_multiple_return_signatures()
         ida_auto.auto_wait()
 
-        helpers.info_ex("The Rust Reverser Helper has finished running.")
+        helpers.info_ex("The Rust Reverser Helper has finished running.\n\nBeware that Ida's decompiler has not fully refreshed the code at all call sites.\nIf you see unassigned local variables (variables in red), decompile the function twice (hit F5 twice).")
 
 if __name__ == "__main__":
     idaapi.require("helpers")
