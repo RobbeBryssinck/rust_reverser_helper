@@ -25,6 +25,7 @@ class RustReverserTests(unittest.TestCase):
         return type_symbol
 
     # TODO: maybe add checks like name checking to make sure enums are being detected properly?
+    # What if a function returns a specific instance of an enum?
     def is_rust_enum_multiple_return(self, enum_symbol):
         if enum_symbol.length > 16:
             return False
@@ -45,6 +46,14 @@ class RustReverserTests(unittest.TestCase):
 
             if value_type.fieldCount >= 2:
                 return False
+            
+            if value_type.fieldCount == 0:
+                if first_variant:
+                    type_length = value_type.length
+                    first_variant = False
+                elif type_length != value_type.length:
+                    return False
+                continue
 
             core_type_id: str = str(value_type.fields[0].underlyingTypeId)
             if not core_type_id in self.typeSymbols:
@@ -57,9 +66,7 @@ class RustReverserTests(unittest.TestCase):
             if first_variant:
                 type_length = core_type.length
                 first_variant = False
-                continue
-
-            if type_length != core_type.length:
+            elif type_length != core_type.length:
                 return False
 
         return True
@@ -67,10 +74,11 @@ class RustReverserTests(unittest.TestCase):
     def is_multiple_return(self, type_symbol):
         if type_symbol.type == 3 and "enum2$" in type_symbol.name:
             # TODO: subtest check for raised exception here
-            with self.subTest(msg="is_rust_enum_multiple_return failure {}".format(type_symbol.name)):
-                self.assertRaises(RuntimeError, self.is_rust_enum_multiple_return, type_symbol)
-            return self.is_rust_enum_multiple_return(type_symbol)
-        
+            try:
+                return self.is_rust_enum_multiple_return(type_symbol)
+            except:
+                self.assertTrue(False, msg="is_rust_enum_multiple_return failure {}".format(type_symbol.name))
+            
         # TODO: handle generic unions
 
         # MRR is only valid with one 128-bit members or two members smaller than 128 bits combined.
