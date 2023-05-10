@@ -7,6 +7,10 @@ from typing import List
 
 import helpers
 
+# TODO:
+# * define str type and auto assign
+
+
 # TODO: expand this (or better yet, find an Ida api function that does this).
 def is_register_name(label: str) -> bool:
     return label == "rax"
@@ -19,7 +23,7 @@ def identify_rust_strings():
 def is_global_rust_string(address: int):
     if not is_in_data_section(address):
         return False
-    
+
     if not is_in_data_section(idc.get_qword(address)):
         return False
 
@@ -28,8 +32,10 @@ def is_global_rust_string(address: int):
     if length == 0 and not is_global_rust_string_empty(address):
         return False
 
+    data: int = idc.get_qword(address)
+
     for i in range(length):
-        if not chr(idc.get_wide_byte(address + i)).isascii():
+        if not chr(idc.get_wide_byte(data + i)).isascii():
             return False
 
     return True
@@ -47,6 +53,7 @@ def identify_rust_strings_in_function(function_address: str):
             continue
 
         source_address: int = idc.get_operand_value(instructions[i], 1)
+
         if not is_global_rust_string(source_address):
             continue
 
@@ -119,7 +126,7 @@ def set_string_comment(address: int, label: str) -> bool:
 # TODO: handle exception.
 def mutate_duplicate_label(label: str) -> str:
     for i in range(1024):
-        new_label: str = label + "_" + chr(i)
+        new_label: str = label + "_" + str(i)
         if not does_label_exist(new_label):
             return new_label
 
