@@ -54,7 +54,7 @@ def does_function_return_multiple(function_start: int) -> bool:
             break
 
         position: int = find_second_return_register_position(insn)
-        
+
         if position == -1:
             continue
         elif position == 0:
@@ -64,16 +64,16 @@ def does_function_return_multiple(function_start: int) -> bool:
         elif position == 1:
             # If the second return register is used, it is probably not stored as a return value.
             break
-    
+
     if is_second_return_register_stored:
         return True
-    
+
     for ref in idautils.CodeRefsTo(function_start, True):
         if does_caller_use_second_return_register(ref):
             return True
-    
+
     return False
-    
+
 # Returns -1 if second return register is not used.
 def find_second_return_register_position(address: int) -> int:
     if helpers.is_operand_return_register(address, 0):
@@ -86,20 +86,20 @@ def find_second_return_register_position(address: int) -> int:
 def does_caller_use_second_return_register(caller_address: int) -> bool:
     current_instruction: int = caller_address
     function_end: int = idc.find_func_end(caller_address)
-    
+
     for i in range(5):
         current_instruction = idc.find_code(current_instruction, idc.SEARCH_DOWN)
         if current_instruction >= function_end or helpers.is_returning_instruction(current_instruction):
             break
 
         position: int = find_second_return_register_position(current_instruction)
-        
+
         if position == 0:
             break
         elif position == 1:
             if helpers.is_moving_instruction(current_instruction):
                 return True
-    
+
     return False
 
 def fix_multiple_return_signature(address: int):
