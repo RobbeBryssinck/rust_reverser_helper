@@ -56,7 +56,7 @@ def does_function_return_multiple(address: int) -> bool:
         elif position == 0:
             if helpers.is_moving_instruction(insn):
                 is_second_return_register_stored = True
-                break
+            break
         elif position == 1:
             # If the second return register is used, it is probably not stored as a return value.
             break
