@@ -19,9 +19,15 @@ def identify_rust_strings():
 def is_global_rust_string(address: int):
     if not is_in_data_section(address):
         return False
+    
+    if not is_in_data_section(idc.get_qword(address)):
+        return False
 
-    # TODO: can this be simplified using ida api?
     length: int = idc.get_qword(address + 8)
+
+    if length == 0 and not is_global_rust_string_empty(address):
+        return False
+
     for i in range(length):
         if not chr(idc.get_wide_byte(address + i)).isascii():
             return False
@@ -41,11 +47,11 @@ def identify_rust_strings_in_function(function_address: str):
             continue
 
         source_address: int = idc.get_operand_value(instructions[i], 1)
-        if not is_in_data_section(source_address):
+        if not is_global_rust_string(source_address):
             continue
 
         if "off_" in idc.print_operand(instructions[i], 1):
-            if is_global_rust_string_empty(instructions[i]):
+            if is_global_rust_string_empty(source_address):
                 set_string_name(source_address, "raEmpty")
                 continue
 
