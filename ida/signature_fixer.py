@@ -73,6 +73,8 @@ def get_argument_annotation(position: int) -> str:
         return ""
     elif False:
         return ""
+    else:
+        return ""
 
 if __name__ == "__main__":
     fix_multiple_return_signatures()
