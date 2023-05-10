@@ -5,11 +5,12 @@ import helpers
 
 import idaapi
 import idautils
+import ida_loader
 
 class RustReverserTests(unittest.TestCase):
     def setUp(self):
         data = ""
-        with open("binding.json") as file:
+        with open(ida_loader.get_path(ida_loader.PATH_TYPE_CMD).rsplit('.')[0] + ".json") as file:
             data = file.read()
         self.symbols = json.loads(data, object_hook=lambda d: SimpleNamespace(**d))
         self.base = idaapi.get_imagebase()
@@ -82,7 +83,7 @@ class RustReverserTests(unittest.TestCase):
         # TODO: handle generic unions
 
         # MRR is only valid with one 128-bit members or two members smaller than 128 bits combined.
-        if type_symbol.fieldCount > 2 or type_symbol.fieldCount == 0:
+        if type_symbol.fieldCount == 0 or type_symbol.fieldCount > 2:
             return False
         
         size: int = 0
@@ -93,13 +94,10 @@ class RustReverserTests(unittest.TestCase):
         
         print("Return type: {}, size: {}".format(type_symbol.id, size))
 
-        if size == 0:
+        if size == 0 or size > 16:
             return False
 
         if type_symbol.fieldCount == 1 and size <= 8:
-            return False
-        
-        if type_symbol.fieldCount == 2 and size > 16:
             return False
         
         return True
