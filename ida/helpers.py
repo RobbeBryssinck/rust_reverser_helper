@@ -167,3 +167,14 @@ def get_multiple_return_size() -> int:
     else:
         return 8
 
+def is_jump_to_virtual(address: int) -> bool:
+    platform = get_platform()
+
+    operator: str = idc.print_insn_mnem(address)
+    operand: str = idc.print_operand(address, 0)
+
+    if platform.is_x64():
+        return operator == "jmp" and operand == "rax"
+    else:
+        return False
+

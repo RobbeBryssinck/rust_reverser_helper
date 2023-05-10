@@ -49,6 +49,10 @@ def does_function_return_multiple(address: int) -> bool:
         if helpers.is_calling_instruction(insn):
             break
 
+        # TODO: check for embedded return value optimization here.
+        if helpers.is_jump_to_virtual(insn):
+            break
+
         position: int = find_second_return_register_position(insn)
         
         if position == -1:
