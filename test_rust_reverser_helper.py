@@ -229,7 +229,13 @@ class RustReverserTests(unittest.TestCase):
         string_extractor.extract_strings_from_files("../../src/")
         for rust_string in string_extractor.strings:
             with self.subTest(msg="Rust string: {}".format(rust_string)):
-                self.assertIn(rust_string, reverser.rust_strings)
+                if rust_string in reverser.rust_strings:
+                    self.assertTrue(True)
+                else:
+                    # Rust's `println!()` macros adds a newline, which the string extractor does not account for.
+                    rust_string = rust_string + "\n"
+                    self.assertIn(rust_string, reverser.rust_strings)
+
 
 if __name__ == "__main__":
     idaapi.require("helpers")

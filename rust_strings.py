@@ -145,7 +145,8 @@ def is_inline_rust_string(instructions: List[int]) -> bool:
     
 def is_valid_ascii_string(data: int, length: int) -> bool:
     for i in range(length):
-        if not chr(idc.get_wide_byte(data + i)).isprintable():
+        character = chr(idc.get_wide_byte(data + i))
+        if not character.isprintable() and character != "\n" and character != "\r":
             return False
     
     return True
