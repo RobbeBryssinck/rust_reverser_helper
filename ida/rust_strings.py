@@ -1,7 +1,3 @@
-# TODO:
-# * define str type and auto assign
-
-
 import idautils
 import idaapi
 import idc
@@ -16,12 +12,16 @@ from typing import List
 
 import helpers
 
+defined_strings = []
+
 # TODO: architecture independence (start with 32 vs 64 bit).
 def identify_rust_strings():
     create_rust_string_type()
 
     for function_address in idautils.Functions():
         identify_rust_strings_in_function(function_address)
+    
+    defined_strings.clear()
 
 def create_rust_string_type():
     id = ida_struct.get_struc_id("RustString")
@@ -117,12 +117,16 @@ def create_rust_string_label(address: int, length: int) -> str:
     return label
 
 def define_rust_string(address: int, label: str) -> bool:
+    if address in defined_strings:
+        return False
+
     if set_string_name(address, label) == False:
         return False
     
     idc.SetType(address, "RustString")
 
-# TODO: map that marks addresses that have been labeled already?
+    defined_strings.append(address)
+
 def set_string_name(address: int, label: str) -> bool:
     if not label.isascii():
         return False
@@ -139,7 +143,6 @@ def set_string_name(address: int, label: str) -> bool:
 
     return True
 
-# TODO: map that marks addresses that have been commented already?
 def set_string_comment(address: int, label: str) -> bool:
     if not label.isascii():
         return False
@@ -157,7 +160,6 @@ def set_string_comment(address: int, label: str) -> bool:
 
     return True
 
-# TODO: handle exception.
 def mutate_duplicate_label(label: str) -> str:
     for i in range(1024):
         new_label: str = label + "_" + str(i)
