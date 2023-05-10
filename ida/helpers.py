@@ -1,6 +1,9 @@
 import idc
 import ida_kernwin
 import idaapi
+import ida_auto
+import ida_hexrays
+import ida_funcs
 
 from typing import List
 from enum import Enum
@@ -20,6 +23,12 @@ def get_instructions_from_function(function_address: int) -> List[int]:
         current_instruction = idc.find_code(current_instruction, idc.SEARCH_DOWN)
     
     return instructions
+
+def decompile_function(func_start: int):
+    hf = ida_hexrays.hexrays_failure_t()
+    ida_hexrays.decompile_func(ida_funcs.get_func(func_start), hf)
+
+    ida_auto.auto_wait()
 
 class Platform():
     class FileFormat(Enum):

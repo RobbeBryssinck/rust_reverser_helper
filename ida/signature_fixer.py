@@ -68,6 +68,9 @@ def find_second_return_register_position(address: int) -> int:
         return -1
 
 def fix_multiple_return_signature(address: int):
+    # Let the decompiler run on the function first to establish an initial function signature.
+    helpers.decompile_function(address)
+
     declaration: str = generate_multiple_return_signature(address)
     print(declaration + " " + hex(address))
 
