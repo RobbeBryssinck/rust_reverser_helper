@@ -52,16 +52,7 @@ def create_rust_string_type():
 def identify_rust_strings_in_function(function_address: str) -> bool:
     instructions: List[int] = helpers.get_instructions_from_function(function_address)
 
-    # TODO: move to helpers
-    load_instruction: str = ""
-    if helpers.get_platform().is_arm():
-        load_instruction = "ADRL"
-    elif helpers.get_platform().is_intel_x86():
-        load_instruction = "lea"
-    else:
-        # TODO: move this to identify_rust_strings()
-        print("Architecture is not supported (has no load instruction for strings).")
-        return False
+    load_instruction: str = helpers.get_load_address_instruction()
 
     viable_list_length: int = len(instructions) - 2
     for i in range(viable_list_length):

@@ -209,3 +209,13 @@ def is_jump_dynamic(address: int) -> bool:
     else:
         return False
 
+def get_load_address_instruction() -> str:
+    platform = get_platform()
+
+    if platform.is_intel_x86():
+        return "lea"
+    elif platform.is_arm():
+        return "ADRL"
+    else:
+        return ""
+
