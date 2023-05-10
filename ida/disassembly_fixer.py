@@ -43,7 +43,6 @@ def reanalyze_all_functions():
     for function_address in idautils.Functions():
         reanalyze_function(function_address)
 
-# TODO: cleaner way maybe, to retain function name (ida_funcs api), or warn about it before running?
 def reanalyze_function(func_start: int):
     func_end = idc.find_func_end(func_start)
     size = func_end - func_start

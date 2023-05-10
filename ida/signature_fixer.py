@@ -55,7 +55,6 @@ def fix_multiple_return_signature(address: int):
 
     idc.apply_type(address, result, idc.TINFO_DEFINITE)
 
-# TODO: architecture independence
 def generate_multiple_return_signature(address: int) -> str:
     arguments: str = ""
     

@@ -127,38 +127,46 @@ def define_rust_string(address: int, label: str) -> bool:
 
     defined_strings.append(address)
 
+    return True
+
 def set_string_name(address: int, label: str) -> bool:
     if not label.isascii():
         return False
 
     if does_label_exist(label):
-        label = mutate_duplicate_label(label)
+        try:
+            label = mutate_duplicate_label(label)
+        except RuntimeError as e:
+            print(e.args[0])
 
     result: bool = idc.set_name(address, label)
 
-    if result == False:
-        raise RuntimeError("Failed to name string at " + hex(address) + ": '" + label + "'")
+    if result:
+        print("Successfully placed label at " + hex(address) + ": '" + label + "'")
+    else:
+        print("Failed to name string at " + hex(address) + ": '" + label + "'")
 
-    print("Successfully placed label at " + hex(address) + ": '" + label + "'")
-
-    return True
+    return result
 
 def set_string_comment(address: int, label: str) -> bool:
     if not label.isascii():
         return False
 
     if does_label_exist(label):
-        label = mutate_duplicate_label(label)
+        try:
+            label = mutate_duplicate_label(label)
+        except RuntimeError as e:
+            print(e.args[0])
 
     # TODO: third arg?
     result: bool = idc.set_cmt(address, label, False)
 
-    if result == False:
-        raise RuntimeError("Failed to place comment: '" + label + "'")
-
-    print("Successfully placed comment: '" + label + "'")
-
-    return True
+    if result:
+        print("Successfully placed comment: '" + label + "'")
+    else:
+        print("Failed to place comment: '" + label + "'")
+    
+    return result
 
 def mutate_duplicate_label(label: str) -> str:
     for i in range(1024):
