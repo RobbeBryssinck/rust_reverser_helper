@@ -64,14 +64,17 @@ def reanalyze_function(func_start: int):
 
     print("Fixed function {}".format(hex(func_start)))
 
+    reset_problems_in_function(func_start, func_end)
+
+# There's a bug in Ida's API.
+# If you undefine and redefine a function's data, the operands are marked as a disassembly problem.
+# This resets each problem in the reanalyzed functions.
 def reset_problems_in_function(func_start: int, func_end: int):
     current_address: int = func_start
     while current_address != func_end:
         ida_problems.forget_problem(ida_problems.PR_DISASM, current_address)
         current_address = current_address + 1
 
-# TODO: there's a bug in Ida's API.
-# If you undefine and redefine a function's data, the operands are marked as a disassembly problem.
 def verify_functions():
     problematic_functions = get_problematic_functions()
     if not problematic_functions:
