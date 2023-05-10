@@ -62,12 +62,12 @@ def identify_rust_strings_in_function(function_address: str):
 
         if "off_" in idc.print_operand(instructions[i], 1):
             if is_global_rust_string_empty(source_address):
-                set_string_name(source_address, "raEmpty")
+                define_rust_string(source_address, "raEmpty")
                 continue
 
             string_length: int = idc.get_qword(source_address + 8)
             label: str = create_rust_string_label(idc.get_qword(source_address), string_length)
-            set_string_name(source_address, label)
+            define_rust_string(source_address, label)
             continue
 
 
@@ -115,6 +115,12 @@ def create_rust_string_label(address: int, length: int) -> str:
     label = ida_name.validate_name(label, 2)
 
     return label
+
+def define_rust_string(address: int, label: str) -> bool:
+    if set_string_name(address, label) == False:
+        return False
+    
+    idc.SetType(address, "RustString")
 
 # TODO: map that marks addresses that have been labeled already?
 def set_string_name(address: int, label: str) -> bool:
