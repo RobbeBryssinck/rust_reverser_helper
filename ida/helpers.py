@@ -129,3 +129,13 @@ def is_calling_instruction(address: int) -> bool:
     else:
         return False
 
+def is_returning_instruction(address: int) -> bool:
+    platform = get_platform()
+
+    operator: str = idc.print_insn_mnem(address)
+
+    if platform.is_intel_x86():
+        return operator == "retn"
+    else:
+        return False
+

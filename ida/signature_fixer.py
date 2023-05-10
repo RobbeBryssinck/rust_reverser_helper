@@ -24,7 +24,7 @@ def does_function_return_multiple(address: int) -> bool:
     index: int = -1
 
     for instruction in instructions:
-        if idc.print_insn_mnem(instruction) == "retn":
+        if helpers.is_returning_instruction(instruction):
             index = instructions.index(instruction)
     
     if index == -1:
