@@ -94,7 +94,7 @@ def does_caller_use_second_return_register(caller_address: int) -> bool:
 
     for i in range(5):
         current_instruction = idc.find_code(current_instruction, idc.SEARCH_DOWN)
-        if current_instruction >= function_end or helpers.is_returning_instruction(current_instruction):
+        if current_instruction >= function_end or helpers.is_returning_instruction(current_instruction) or helpers.is_calling_instruction(current_instruction):
             break
 
         position: int = find_second_return_register_position(current_instruction)
