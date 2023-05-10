@@ -1,6 +1,11 @@
 import idc
+import ida_kernwin
 
 from typing import List
+
+def warn_and_exit():
+    ida_kernwin.warning("The Rust reverser helper has stopped early.")
+    exit()
 
 def get_instructions_from_function(function_address: int) -> List[int]:
     instructions: List[int] = []

@@ -1,24 +1,65 @@
+# TODO:
+# * define str type and auto assign
+
+
 import idautils
 import idaapi
 import idc
 import ida_name
+import ida_struct
+import ida_bytes
+import ida_idaapi
+import ida_kernwin
 
 from typing import List
 
 import helpers
 
-# TODO:
-# * define str type and auto assign
-
-
-# TODO: expand this (or better yet, find an Ida api function that does this).
-def is_register_name(label: str) -> bool:
-    return label == "rax"
-
 # TODO: architecture independence (start with 32 vs 64 bit).
 def identify_rust_strings():
+    create_rust_string_type()
+
     for function_address in idautils.Functions():
         identify_rust_strings_in_function(function_address)
+
+def create_rust_string_type():
+    id = ida_struct.get_struc_id("RustString")
+    if id != -1:
+        dialogue_result = ida_kernwin.ask_yn(ida_kernwin.ASKBTN_CANCEL, "The RustString type already exists. Do you want to overwrite this type?")
+        if dialogue_result == ida_kernwin.ASKBTN_YES:
+            idc.del_struc(id)
+        elif dialogue_result == ida_kernwin.ASKBTN_NO:
+            return
+        elif dialogue_result == ida_kernwin.ASKBTN_CANCEL:
+            helpers.warn_and_exit()
+
+    id = ida_struct.add_struc(-1, "RustString")
+    idc.add_struc_member(id, "data_ptr", ida_idaapi.BADADDR, ida_bytes.off_flag()|ida_bytes.FF_DATA|ida_bytes.FF_QWORD, 0, 8)
+    idc.add_struc_member(id, "length", ida_idaapi.BADADDR, (ida_bytes.FF_QWORD|ida_bytes.FF_DATA)&0xFFFFFFFF, -1, 8)
+
+def identify_rust_strings_in_function(function_address: str):
+    instructions: List[int] = helpers.get_instructions_from_function(function_address)
+
+    viable_list_length: int = len(instructions) - 2
+    for i in range(viable_list_length):
+        if idc.print_insn_mnem(instructions[i]) != "lea":
+            continue
+
+        source_address: int = idc.get_operand_value(instructions[i], 1)
+
+        if not is_global_rust_string(source_address):
+            continue
+
+        if "off_" in idc.print_operand(instructions[i], 1):
+            if is_global_rust_string_empty(source_address):
+                set_string_name(source_address, "raEmpty")
+                continue
+
+            string_length: int = idc.get_qword(source_address + 8)
+            label: str = create_rust_string_label(idc.get_qword(source_address), string_length)
+            set_string_name(source_address, label)
+            continue
+
 
 def is_global_rust_string(address: int):
     if not is_in_data_section(address):
@@ -43,29 +84,6 @@ def is_global_rust_string(address: int):
 def is_global_rust_string_empty(address: int):
     # Empty strings in Rust point to themselves.
     return idc.get_qword(address) == address and idc.get_qword(address + 8) == 0
-
-def identify_rust_strings_in_function(function_address: str):
-    instructions: List[int] = helpers.get_instructions_from_function(function_address)
-
-    viable_list_length: int = len(instructions) - 2
-    for i in range(viable_list_length):
-        if idc.print_insn_mnem(instructions[i]) != "lea":
-            continue
-
-        source_address: int = idc.get_operand_value(instructions[i], 1)
-
-        if not is_global_rust_string(source_address):
-            continue
-
-        if "off_" in idc.print_operand(instructions[i], 1):
-            if is_global_rust_string_empty(source_address):
-                set_string_name(source_address, "raEmpty")
-                continue
-
-            string_length: int = idc.get_qword(source_address + 8)
-            label: str = create_rust_string_label(idc.get_qword(source_address), string_length)
-            set_string_name(source_address, label)
-            continue
 
 def is_in_data_section(address: int) -> bool:
     segment = idaapi.get_visible_segm_name(idaapi.getseg(address))
