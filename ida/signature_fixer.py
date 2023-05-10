@@ -6,6 +6,8 @@ import helpers
 
 from typing import List
 
+# TODO: maybe decompile all again after fixing all functions?
+
 def fix_multiple_return_signatures():
     for function_address in idautils.Functions():
         if does_function_return_multiple(function_address):
@@ -20,7 +22,7 @@ def does_function_return_multiple(address: int) -> bool:
 
     instructions: List[int] = helpers.get_instructions_from_function(address)
     
-    if len(instructions) < 4:
+    if len(instructions) < 3:
         return False
     
     index: int = -1
@@ -29,20 +31,21 @@ def does_function_return_multiple(address: int) -> bool:
         if helpers.is_returning_instruction(instruction):
             index = instructions.index(instruction)
     
-    if index == -1:
+    if index == -1 or index < 2:
         return False
     
-    walkback_range: int = 10
-    if index < walkback_range:
-        walkback_range = index
+    walkback_limit: int = 15
+    if index < walkback_limit:
+        walkback_limit = index + 1
 
     is_second_return_register_stored: bool = False
 
-    for i in range(1, walkback_range):
+    for i in range(1, walkback_limit):
         insn: int = instructions[index - i]
 
         # If a call is made and the second return register is not filled after, it does not exist,
         # as the second return register can be trashed in a function call.
+        # TODO: check for embedded return value optimization here.
         if helpers.is_calling_instruction(insn):
             break
 
@@ -157,3 +160,4 @@ def get_argument_annotation(position: int) -> str:
 
 if __name__ == "__main__":
     fix_multiple_return_signatures()
+

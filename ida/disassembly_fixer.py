@@ -11,6 +11,8 @@ from typing import List
 
 import helpers
 
+# TODO: maybe decompile all again after fixing all functions?
+
 def fix_disassembly():
     reanalyze_problematic_functions()
 
@@ -59,6 +61,8 @@ def reanalyze_function(func_start: int):
     ida_auto.auto_wait()
 
     helpers.decompile_function(func_start)
+
+    print("Fixed function {}".format(hex(func_start)))
 
 # TODO: there's a bug in Ida's API.
 # If you undefine and redefine a function's data, the operands are marked as a disassembly problem.
