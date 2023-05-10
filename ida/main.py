@@ -18,7 +18,7 @@ def execute_all():
     signature_fixer.fix_multiple_return_signatures()
     ida_auto.auto_wait()
 
-    print("The Rust Reverser Helper has finished running.")
+    helpers.info_ex("The Rust Reverser Helper has finished running.")
 
 if __name__ == "__main__":
     idaapi.require("helpers")

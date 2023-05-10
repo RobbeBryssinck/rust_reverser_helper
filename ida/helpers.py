@@ -13,6 +13,10 @@ def warn_and_exit():
     ida_kernwin.warning("The Rust reverser helper has stopped early.")
     exit()
 
+def info_ex(message: str):
+    print(message)
+    ida_kernwin.info(message)
+
 def get_instructions_from_function(function_address: int) -> List[int]:
     instructions: List[int] = []
     current_instruction: int = function_address
