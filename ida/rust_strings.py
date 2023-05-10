@@ -7,6 +7,7 @@ import ida_bytes
 import ida_idaapi
 import ida_kernwin
 import ida_typeinf
+import ida_name
 
 from typing import List
 
@@ -51,12 +52,14 @@ def create_rust_string_type():
 def identify_rust_strings_in_function(function_address: str) -> bool:
     instructions: List[int] = helpers.get_instructions_from_function(function_address)
 
+    # TODO: move to helpers
     load_instruction: str = ""
     if helpers.get_platform().is_arm():
         load_instruction = "ADRL"
     elif helpers.get_platform().is_intel_x86():
         load_instruction = "lea"
     else:
+        # TODO: move this to identify_rust_strings()
         print("Architecture is not supported (has no load instruction for strings).")
         return False
 
@@ -67,27 +70,32 @@ def identify_rust_strings_in_function(function_address: str) -> bool:
 
         source_address: int = idc.get_operand_value(instructions[i], 1)
 
-        if not is_global_rust_string(source_address):
-            continue
-
-        if "off_" in idc.print_operand(instructions[i], 1):
+        if is_global_rust_string(source_address):
             if is_global_rust_string_empty(source_address):
-                define_rust_string(source_address, "raEmpty")
+                define_global_rust_string(source_address, "raEmpty")
                 continue
 
             string_length: int = idc.get_qword(source_address + 8)
-            label: str = create_rust_string_label(idc.get_qword(source_address), string_length)
-            define_rust_string(source_address, label)
-            continue
+            label: str = create_global_rust_string_label(idc.get_qword(source_address), string_length)
+            define_global_rust_string(source_address, label)
+        elif is_inline_rust_string(instructions[i:(i+3)]):
+            lea, mov_data, mov_len = instructions[i:(i+3)]
+
+            string_address: int = idc.get_operand_value(lea, 1)
+            string_length: int = idc.get_operand_value(mov_len, 1)
+            label: str = create_inline_rust_string_label(string_address, string_length)
+            define_inline_rust_string(string_address, label)
     
     return True
 
-
-def is_global_rust_string(address: int):
+def is_global_rust_string(address: int) -> bool:
     if not is_in_data_section(address):
         return False
 
     if not is_in_data_section(idc.get_qword(address)):
+        return False
+    
+    if not "off_" in ida_name.get_ea_name(address):
         return False
 
     length: int = idc.get_qword(address + 8)
@@ -97,22 +105,69 @@ def is_global_rust_string(address: int):
 
     data: int = idc.get_qword(address)
 
-    for i in range(length):
-        if not chr(idc.get_wide_byte(data + i)).isascii():
-            return False
+    return is_valid_ascii_string(data, length)
 
-    return True
-
-def is_global_rust_string_empty(address: int):
+def is_global_rust_string_empty(address: int) -> bool:
     # Empty strings in Rust point to themselves.
     return idc.get_qword(address) == address and idc.get_qword(address + 8) == 0
+
+def is_inline_rust_string(instructions: List[int]) -> bool:
+    if len(instructions) != 3:
+        return False
+    
+    lea, mov_data, mov_len = instructions
+    
+    source_address: int = idc.get_operand_value(lea, 1)
+    if not is_in_data_section(source_address):
+        return False
+    
+    if not "unk_" in idc.print_operand(lea, 1):
+        return False
+    
+    # The assembly layout of an inline instruction looks as follows:
+    #
+    # lea rax, unk_XXXXXX
+    # mov qword ptr [rbp + XXh + var_a], rax
+    # mov qword ptr [rbp + XXh + var_a + 8], len
+
+    # TODO: move lea to helpers
+    if idc.print_insn_mnem(lea) != "lea" or not helpers.is_moving_instruction(mov_data) or not helpers.is_moving_instruction(mov_len):
+        return False
+
+    if idc.get_operand_type(lea, 0) != idc.o_reg or idc.get_operand_type(mov_data, 0) != idc.o_displ or idc.get_operand_type(mov_len, 0) != idc.o_displ or idc.get_operand_type(mov_len, 1) != idc.o_imm:
+        return False
+
+    if idc.print_operand(lea, 0) != idc.print_operand(mov_data, 1):
+        return False
+    
+    if (idc.get_operand_value(mov_len, 0) - idc.get_operand_value(mov_data, 0)) != 8:
+        return False
+    
+    length: int = idc.get_operand_value(mov_len, 1)
+    if length == 0:
+        return False
+
+    return is_valid_ascii_string(source_address, length)
+    
+def is_valid_ascii_string(data: int, length: int) -> bool:
+    for i in range(length):
+        if not chr(idc.get_wide_byte(data + i)).isprintable():
+            return False
+    
+    return True
 
 def is_in_data_section(address: int) -> bool:
     segment = idaapi.get_visible_segm_name(idaapi.getseg(address))
     return segment == "_rodata" or segment == "_rdata" or segment == "_data_rel_ro" or segment == ".rodata" or segment == ".rdata" or segment == ".data.rel.ro"
 
-def create_rust_string_label(address: int, length: int) -> str:
-    label: str = "ra"
+def create_global_rust_string_label(address: int, length: int) -> str:
+    return create_rust_string_label("ra", address, length)
+
+def create_inline_rust_string_label(address: int, length: int) -> str:
+    return create_rust_string_label("ia", address, length)
+
+def create_rust_string_label(prefix: str, address: int, length: int) -> str:
+    label: str = prefix
 
     if length > 24:
         length = 24
@@ -128,21 +183,30 @@ def create_rust_string_label(address: int, length: int) -> str:
 
     return label
 
+def define_global_rust_string(address: int, label: str) -> bool:
+    result: bool = define_rust_string(address, label)
+    
+    if result == True:
+        idc.SetType(address, "RustString")
+    
+    return result
+
+def define_inline_rust_string(address: int, label: str) -> bool:
+    return define_rust_string(address, label)
+
 def define_rust_string(address: int, label: str) -> bool:
     if address in defined_strings:
         return False
 
     if set_string_name(address, label) == False:
         return False
-    
-    idc.SetType(address, "RustString")
 
     defined_strings.append(address)
 
     return True
 
 def set_string_name(address: int, label: str) -> bool:
-    if not label.isascii():
+    if not label.isprintable():
         return False
 
     if does_label_exist(label):
@@ -150,6 +214,7 @@ def set_string_name(address: int, label: str) -> bool:
             label = mutate_duplicate_label(label)
         except RuntimeError as e:
             print(e.args[0])
+            return False
 
     result: bool = idc.set_name(address, label)
 
@@ -161,7 +226,7 @@ def set_string_name(address: int, label: str) -> bool:
     return result
 
 def set_string_comment(address: int, label: str) -> bool:
-    if not label.isascii():
+    if not label.isprintable():
         return False
 
     if does_label_exist(label):
@@ -169,6 +234,7 @@ def set_string_comment(address: int, label: str) -> bool:
             label = mutate_duplicate_label(label)
         except RuntimeError as e:
             print(e.args[0])
+            return False
 
     # TODO: third arg?
     result: bool = idc.set_cmt(address, label, False)
