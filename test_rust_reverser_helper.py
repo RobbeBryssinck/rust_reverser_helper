@@ -63,25 +63,27 @@ class RustReverserTests(unittest.TestCase):
         if type_symbol.type == 3 and "enum2$" in type_symbol.name:
             return self.is_rust_enum_multiple_return(type_symbol)
         
+        # TODO: handle generic unions
+
         # MRR is only valid with one 128-bit members or two members smaller than 128 bits combined.
-        if type_symbol.memberVariableCount > 2 or type_symbol.memberVariableCount == 0:
+        if type_symbol.fieldCount > 2 or type_symbol.fieldCount == 0:
             return False
         
         size: int = 0
-        for member_id in type_symbol.memberVariableIds:
-            member_id_str: str = str(member_id)
-            if member_id_str in self.typeSymbols:
-                size = size + self.typeSymbols[member_id_str].length
+        for field in type_symbol.fields:
+            field_type_id: str = str(field.underlyingTypeId)
+            if field_type_id in self.typeSymbols:
+                size = size + self.typeSymbols[field_type_id].length
         
         print("Return type: {}, size: {}".format(type_symbol.id, size))
 
         if size == 0:
             return False
 
-        if type_symbol.memberVariableCount == 1 and size <= 8:
+        if type_symbol.fieldCount == 1 and size <= 8:
             return False
         
-        if type_symbol.memberVariableCount == 2 and size > 16:
+        if type_symbol.fieldCount == 2 and size > 16:
             return False
         
         return True
