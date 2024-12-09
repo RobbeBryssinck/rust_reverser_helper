@@ -55,12 +55,12 @@ class RustReverserTests(unittest.TestCase):
         for variant in enum_symbol.fields[:-1]:
             variant_type_id: str = str(variant.underlyingTypeId)
             if not variant_type_id in self.typeSymbols:
-                raise RuntimeError("Variant type id not found: {}".format(variant_type_id))
+                raise RuntimeError(f"Variant type id not found: {variant_type_id}")
             variant_type = self.typeSymbols[variant_type_id]
 
             value_type_id: str = str(variant_type.fields[0].underlyingTypeId)
             if not value_type_id in self.typeSymbols:
-                raise RuntimeError("Value type id not found: {}".format(value_type_id))
+                raise RuntimeError(f"Value type id not found: {value_type_id}")
             value_type = self.typeSymbols[value_type_id]
 
             if value_type.fieldCount >= 2:
@@ -72,7 +72,7 @@ class RustReverserTests(unittest.TestCase):
 
             core_type_id: str = str(value_type.fields[0].underlyingTypeId)
             if not core_type_id in self.typeSymbols:
-                raise RuntimeError("Core type id not found: {}".format(core_type_id))
+                raise RuntimeError(f"Core type id not found: {core_type_id}")
             core_type = self.typeSymbols[core_type_id]
 
             # Tuples are special, are returned as multiple return
@@ -95,16 +95,16 @@ class RustReverserTests(unittest.TestCase):
             return False
         
         if enum_symbol.fieldCount < 2:
-            raise RuntimeError("This Option has no Some: {}".format(enum_symbol.id))
+            raise RuntimeError(f"This Option has no Some: {enum_symbol.id}")
         
         some_type_id: str = str(enum_symbol.fields[1].underlyingTypeId)
         if not some_type_id in self.typeSymbols:
-            raise RuntimeError("Some type id not found: {}".format(some_type_id))
+            raise RuntimeError(f"Some type id not found: {some_type_id}")
         some_type = self.typeSymbols[some_type_id]
         
         value_type_id: str = str(some_type.fields[0].underlyingTypeId)
         if not value_type_id in self.typeSymbols:
-            raise RuntimeError("Value type id not found: {}".format(value_type_id))
+            raise RuntimeError(f"Value type id not found: {value_type_id}")
         value_type = self.typeSymbols[value_type_id]
 
         # Tuples are special, are returned as multiple return
@@ -120,7 +120,7 @@ class RustReverserTests(unittest.TestCase):
         
         core_type_id: str = str(value_type.fields[0].underlyingTypeId)
         if not core_type_id in self.typeSymbols:
-            raise RuntimeError("Core type id not found: {}".format(core_type_id))
+            raise RuntimeError(f"Core type id not found: {core_type_id}")
         core_type = self.typeSymbols[core_type_id]
 
         if core_type.fieldCount >= 2:
@@ -137,12 +137,12 @@ class RustReverserTests(unittest.TestCase):
             try:
                 return self.is_rust_option_multiple_return(type_symbol)
             except:
-                self.assertTrue(False, msg="is_rust_option_multiple_return failure {}".format(type_symbol.name))
+                self.assertTrue(False, msg=f"is_rust_option_multiple_return failure {type_symbol.name}")
         elif type_symbol.type == 3 and "enum2$" in type_symbol.name:
             try:
                 return self.is_rust_enum_multiple_return(type_symbol)
             except:
-                self.assertTrue(False, msg="is_rust_enum_multiple_return failure {}".format(type_symbol.name))
+                self.assertTrue(False, msg=f"is_rust_enum_multiple_return failure {type_symbol.name}")
             
         union_id_to_length = {}
 
@@ -173,7 +173,7 @@ class RustReverserTests(unittest.TestCase):
         if real_field_count == 0 or real_field_count > 2:
             return False
         
-        print("Return type: {}, size: {}".format(type_symbol.id, size))
+        print(f"Return type: {type_symbol.id}, size: {size}")
 
         if size == 0 or size > 16:
             return False
@@ -200,9 +200,9 @@ class RustReverserTests(unittest.TestCase):
             address = self.base + function.virtualAddress
             function_details = helpers.get_function_details(address)
 
-            print("This should be multiple return: {} {}".format(function_id, hex(address)))
+            print(f"This should be multiple return: {function_id} {hex(address)}")
 
-            with self.subTest(msg="{}: {}, {}".format(hex(address), function_id, function.name)):
+            with self.subTest(msg=f"{hex(address)}: {function_id}, {function.name}"):
                 self.assertEqual(function_details.rettype.get_size(), 16)
 
     def test_multiple_return_false_positives(self):
@@ -229,10 +229,10 @@ class RustReverserTests(unittest.TestCase):
 
             # This takes away most of the "false" false positives, but beware that some real false positives slip through.
             if type_symbol.name == "void":
-                print("This should be multiple return, but is void instead: {}, {}, {}".format(function.id, hex(address), function.name))
+                print(f"This should be multiple return, but is void instead: {function.id}, {hex(address)}, {function.name}")
                 continue
 
-            with self.subTest(msg="{}: {}, {}, {}".format(hex(address), function.id, function.name, return_type_id)):
+            with self.subTest(msg=f"{hex(address)}: {function.id}, {function.name}, {return_type_id}"):
                 self.assertTrue(self.is_multiple_return(type_symbol))
     
     def test_rust_user_defined_strings_false_negatives(self):
@@ -247,9 +247,9 @@ class RustReverserTests(unittest.TestCase):
 
             if not os.path.isdir(source_directory):
                 if not os.path.exists(source_directory):
-                    ida_kernwin.warning("Directory '{}' does not exist.".format(source_directory))
+                    ida_kernwin.warning(f"Directory '{source_directory}' does not exist.")
                 else:
-                    ida_kernwin.warning("Path '{}' is not a directory.".format(source_directory))
+                    ida_kernwin.warning(f"Path '{source_directory}' is not a directory.")
                 continue
 
             break
@@ -258,7 +258,7 @@ class RustReverserTests(unittest.TestCase):
         string_extractor.extract_strings_from_files(source_directory)
 
         for rust_string in string_extractor.strings:
-            with self.subTest(msg="Rust string: {}".format(rust_string)):
+            with self.subTest(msg=f"Rust string: {rust_string}"):
                 if rust_string in reverser.rust_strings:
                     self.assertTrue(True)
                 else:
@@ -268,7 +268,7 @@ class RustReverserTests(unittest.TestCase):
     
     def test_disassembly_fixes(self):
         for fixed_function in reverser.fixed_functions:
-            with self.subTest("Function fix check: {}".format(hex(fixed_function))):
+            with self.subTest(f"Function fix check: {hex(fixed_function)}"):
                 func = ida_funcs.get_func(fixed_function)
                 func_failure = ida_hexrays.hexrays_failure_t()
                 result = ida_hexrays.decompile_func(func, func_failure)
@@ -280,7 +280,7 @@ class RustReverserTests(unittest.TestCase):
                         critical_warning_hit = True
                         break
                 
-                self.assertFalse(critical_warning_hit, "Function is not fixed: {}".format(hex(fixed_function)))
+                self.assertFalse(critical_warning_hit, f"Function is not fixed: {hex(fixed_function)}")
 
 if __name__ == "__main__":
     idaapi.require("helpers")
@@ -295,7 +295,7 @@ if __name__ == "__main__":
     usym_file_path = os.getcwd() + "/" + file_base_name + ".json"
 
     if not os.path.exists(usym_file_path):
-        ida_kernwin.warning("USYM file '{}' does not exist. Did you run the Universal Symbol conversion tool?".format(usym_file_path))
+        ida_kernwin.warning(f"USYM file '{usym_file_path}' does not exist. Did you run the Universal Symbol conversion tool?")
 
     reverser.execute_all()
     unittest.TextTestRunner().run(unittest.TestLoader().loadTestsFromTestCase(RustReverserTests))

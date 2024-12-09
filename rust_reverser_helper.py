@@ -43,14 +43,14 @@ class RustReverserHelper():
 
         t2 = time.time()
 
-        print("Time: {}".format(t2-t1))
+        print(f"Time: {t2-t1}")
 
         if rust_main_address == 0:
             print("Rust main not detected.")
             helpers.info_ex("The Rust Reverser Helper has finished running. The RustMain function was not detected.\n\nBeware that Ida's decompiler has not fully refreshed the code at all call sites.\nIf you see unassigned local variables (variables in red), decompile the function twice (hit F5 twice).")
         else:
-            print("Rust main detected at {}".format(rust_main_address))
-            helpers.info_ex("The Rust Reverser Helper has finished running. The RustMain function was detected at address '{}'.\n\nBeware that Ida's decompiler has not fully refreshed the code at all call sites.\nIf you see unassigned local variables (variables in red), decompile the function twice (hit F5 twice).".format(hex(rust_main_address)))
+            print(f"Rust main detected at {hex(rust_main_address)}")
+            helpers.info_ex(f"The Rust Reverser Helper has finished running. The RustMain function was detected at address '{hex(rust_main_address)}'.\n\nBeware that Ida's decompiler has not fully refreshed the code at all call sites.\nIf you see unassigned local variables (variables in red), decompile the function twice (hit F5 twice).")
 
 
 if __name__ == "__main__":

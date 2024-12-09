@@ -91,7 +91,7 @@ class Platform():
         ]
 
         if self.file_format == Platform.FileFormat.NONE or self.architecture == Platform.Architecture.NONE or self.platform not in proven_combinations:
-            print("Architecture is not supported yet: '{}'.".format(platform_type))
+            print(f"Architecture is not supported yet: '{platform_type}'.")
             warn_and_exit()
     
     def is_intel_x86(self) -> bool:

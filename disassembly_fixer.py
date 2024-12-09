@@ -63,7 +63,7 @@ def reanalyze_function(func_start: int):
 
     helpers.decompile_function(func_start)
 
-    print("Fixed function {}".format(hex(func_start)))
+    print(f"Fixed function {hex(func_start)}")
 
     reset_problems_in_function(func_start, func_end)
 
@@ -89,4 +89,4 @@ if __name__ == "__main__":
     t1 = time.time()
     fix_disassembly()
     t2 = time.time()
-    print("Time: {}".format(t2-t1))
+    print("Time: {t2-t1}")

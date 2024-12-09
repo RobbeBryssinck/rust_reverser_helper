@@ -267,5 +267,5 @@ if __name__ == "__main__":
     t1 = time.time()
     identify_rust_strings()
     t2 = time.time()
-    print("Time: {}".format(t2-t1))
+    print(f"Time: {t2-t1}")
 

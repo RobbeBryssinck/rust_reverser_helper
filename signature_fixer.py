@@ -102,7 +102,7 @@ def does_caller_use_second_return_register(caller_address: int) -> bool:
             break
         elif position == 1:
             if helpers.is_moving_instruction(current_instruction):
-                print("Reason: caller uses second return register: {}.".format(hex(current_instruction)))
+                print(f"Reason: caller uses second return register: {hex(current_instruction)}.")
                 return True
 
     return False
@@ -127,11 +127,11 @@ def generate_multiple_return_signature(address: int) -> str:
     for i in range(function_details.size()):
         if i != 0:
             arguments = arguments + ", "
-        arguments = arguments + "{} {}".format(ida_typeinf.print_tinfo('', 0, 0, idc.PRTYPE_1LINE, function_details[i].type, '', ''), function_details[i].name)
+        arguments = arguments + f"{ida_typeinf.print_tinfo('', 0, 0, idc.PRTYPE_1LINE, function_details[i].type, '', '')} {function_details[i].name}"
         arguments = arguments + get_argument_annotation(i)
 
     # Function name is discarded by parse_decl.
-    return "__int128 __usercall new_func{}({});".format(return_registers_annotation, arguments)
+    return f"__int128 __usercall new_func{return_registers_annotation}({arguments});"
 
 def get_return_registers_annotation() -> str:
     platform = helpers.get_platform()
@@ -144,52 +144,39 @@ def get_return_registers_annotation() -> str:
         return ""
 
 def get_argument_annotation(position: int) -> str:
-    annotation: str = "@<{}>"
-
     platform = helpers.get_platform()
 
     if platform.is_pe_x64():
         if position == 0:
-            return annotation.format("rcx")
+            return "@<rcx>"
         if position == 1:
-            return annotation.format("rdx")
+            return "@<rdx>"
         if position == 2:
-            return annotation.format("r8")
+            return "@<r8>"
         if position == 3:
-            return annotation.format("r9")
+            return "@<r9>"
         return ""
     elif platform.is_elf_x64():
         if position == 0:
-            return annotation.format("rdi")
+            return "@<rdi>"
         if position == 1:
-            return annotation.format("rsi")
+            return "@<rsi>"
         if position == 2:
-            return annotation.format("rdx")
+            return "@<rdx>"
         if position == 3:
-            return annotation.format("rcx")
+            return "@<rcx>"
         if position == 4:
-            return annotation.format("r8")
+            return "@<r8>"
         if position == 5:
-            return annotation.format("r9")
+            return "@<r9>"
         return ""
+    
     # ARM has the same ABI across different operating systems.
     elif platform.is_arm64():
-        if position == 0:
-            return annotation.format("X0")
-        if position == 1:
-            return annotation.format("X1")
-        if position == 2:
-            return annotation.format("X2")
-        if position == 3:
-            return annotation.format("X3")
-        if position == 4:
-            return annotation.format("X4")
-        if position == 5:
-            return annotation.format("X5")
-        if position == 6:
-            return annotation.format("X6")
-        if position == 7:
-            return annotation.format("X7")
+        if position < 8:
+            return f"@<X{position}>"
+        else:
+            return ""
     else:
         return ""
 
@@ -197,5 +184,5 @@ if __name__ == "__main__":
     t1 = time.time()
     fix_multiple_return_signatures()
     t2 = time.time()
-    print("Time: {}".format(t2-t1))
+    print(f"Time: {t2-t1}")
 
